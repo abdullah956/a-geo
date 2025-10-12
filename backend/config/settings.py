@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'courses',
+    'attendance',
 ]
 
 MIDDLEWARE = [

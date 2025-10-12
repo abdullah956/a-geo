@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services/authService';
 import Profile from '../common/Profile';
+import StudentAttendancePanel from '../attendance/StudentAttendancePanel';
+import AttendanceNotificationBanner from '../attendance/AttendanceNotificationBanner';
+import { autoAttendanceService } from '../../services/autoAttendanceService';
 import './Dashboard.css';
+import '../../services/autoAttendanceService.css';
 
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
@@ -10,6 +14,7 @@ const StudentDashboard = () => {
   const [showEnrollments, setShowEnrollments] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -29,6 +34,13 @@ const StudentDashboard = () => {
     fetchDashboardData();
   }, []);
 
+  // Initialize automatic attendance system for students
+  useEffect(() => {
+    if (user && user.role === 'student') {
+      autoAttendanceService.initialize();
+    }
+  }, [user]);
+
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -45,6 +57,7 @@ const StudentDashboard = () => {
   const handleBackToDashboard = () => {
     setShowProfile(false);
     setShowEnrollments(false);
+    setShowAttendance(false);
     setSelectedEnrollment(null);
     // Refresh user data from localStorage to get updated profile picture
     const updatedUser = authService.getCurrentUser();
@@ -60,6 +73,10 @@ const StudentDashboard = () => {
 
   if (showProfile) {
     return <Profile onBack={handleBackToDashboard} />;
+  }
+
+  if (showAttendance) {
+    return <StudentAttendancePanel onBack={handleBackToDashboard} />;
   }
 
   return (
@@ -81,6 +98,8 @@ const StudentDashboard = () => {
         </button>
       </header>
 
+      <AttendanceNotificationBanner />
+
       <main className="dashboard-main">
         {!showEnrollments ? (
           <>
@@ -100,6 +119,17 @@ const StudentDashboard = () => {
                   View Courses
                 </button>
               </div>
+
+          <div className="dashboard-card">
+            <h3>Attendance</h3>
+            <p>Mark your attendance for active sessions</p>
+            <button 
+              className="card-btn"
+              onClick={() => setShowAttendance(true)}
+            >
+              Mark Attendance
+            </button>
+          </div>
 
           <div className="dashboard-card">
             <h3>Assignments</h3>

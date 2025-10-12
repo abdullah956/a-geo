@@ -17,9 +17,7 @@ class Course(models.Model):
     # Teacher assigned to this course
     teacher = models.ForeignKey(
         User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         limit_choices_to={'role': 'teacher'},
         help_text="Teacher assigned to this course"
     )

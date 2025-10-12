@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services/authService';
 import Profile from '../common/Profile';
+import AttendanceSessionManager from '../attendance/AttendanceSessionManager';
 import './Dashboard.css';
 
 const TeacherDashboard = () => {
@@ -10,6 +11,7 @@ const TeacherDashboard = () => {
   const [showCourses, setShowCourses] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -45,6 +47,7 @@ const TeacherDashboard = () => {
   const handleBackToDashboard = () => {
     setShowProfile(false);
     setShowCourses(false);
+    setShowAttendance(false);
     setSelectedCourse(null);
     // Refresh user data from localStorage to get updated profile picture
     const updatedUser = authService.getCurrentUser();
@@ -60,6 +63,10 @@ const TeacherDashboard = () => {
 
   if (showProfile) {
     return <Profile onBack={handleBackToDashboard} />;
+  }
+
+  if (showAttendance) {
+    return <AttendanceSessionManager courses={dashboardData?.courses || []} onBack={handleBackToDashboard} />;
   }
 
   return (
@@ -112,6 +119,17 @@ const TeacherDashboard = () => {
             <p>Monitor student progress and performance</p>
             <button className="card-btn">View Students</button>
           </div>
+
+              <div className="dashboard-card">
+                <h3>Attendance Management</h3>
+                <p>Start and manage attendance sessions</p>
+                <button 
+                  className="card-btn"
+                  onClick={() => setShowAttendance(true)}
+                >
+                  Manage Attendance
+                </button>
+              </div>
 
               <div className="dashboard-card">
                 <h3>Analytics</h3>
