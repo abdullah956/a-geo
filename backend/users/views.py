@@ -287,17 +287,39 @@ def dashboard_view(request):
         
         # Add role-specific data
         if user.is_student():
+            # Get student's enrolled courses
+            from courses.models import Enrollment
+            from courses.serializers import EnrollmentSerializer
+
+            student_enrollments = Enrollment.objects.filter(
+                student=user,
+                is_active=True
+            ).select_related('course')
+
+            enrollments_serializer = EnrollmentSerializer(student_enrollments, many=True)
+
             dashboard_data.update({
                 'message': 'Welcome to Student Dashboard',
-                'features': ['View Courses', 'Submit Assignments', 'Track Progress']
+                'features': ['View Courses', 'Submit Assignments', 'Track Progress'],
+                'enrollments': enrollments_serializer.data,
+                'enrollments_count': student_enrollments.count()
             })
-            auth_logger.info(f"Student dashboard data provided for: {user.email}")
+            auth_logger.info(f"Student dashboard data provided for: {user.email} with {student_enrollments.count()} enrollments")
         elif user.is_teacher():
+            # Get teacher's courses
+            from courses.models import Course
+            from courses.serializers import TeacherCourseSerializer
+
+            teacher_courses = Course.objects.filter(teacher=user, is_active=True)
+            courses_serializer = TeacherCourseSerializer(teacher_courses, many=True)
+
             dashboard_data.update({
                 'message': 'Welcome to Teacher Dashboard',
-                'features': ['Manage Courses', 'Grade Assignments', 'View Students']
+                'features': ['Manage Courses', 'Grade Assignments', 'View Students'],
+                'courses': courses_serializer.data,
+                'courses_count': teacher_courses.count()
             })
-            auth_logger.info(f"Teacher dashboard data provided for: {user.email}")
+            auth_logger.info(f"Teacher dashboard data provided for: {user.email} with {teacher_courses.count()} courses")
         elif user.is_admin():
             dashboard_data.update({
                 'message': 'Welcome to Admin Dashboard',
