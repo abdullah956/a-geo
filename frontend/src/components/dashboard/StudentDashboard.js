@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services/authService';
+import Profile from '../common/Profile';
 import './Dashboard.css';
 
 const StudentDashboard = () => {
@@ -8,6 +9,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showEnrollments, setShowEnrollments] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -36,16 +38,43 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleEditProfile = () => {
+    setShowProfile(true);
+  };
+
+  const handleBackToDashboard = () => {
+    setShowProfile(false);
+    setShowEnrollments(false);
+    setSelectedEnrollment(null);
+    // Refresh user data from localStorage to get updated profile picture
+    const updatedUser = authService.getCurrentUser();
+    console.log('Updated user data from localStorage:', updatedUser);
+    if (updatedUser) {
+      setUser(updatedUser);
+    }
+  };
+
   if (loading) {
     return <div className="dashboard-loading">Loading...</div>;
+  }
+
+  if (showProfile) {
+    return <Profile onBack={handleBackToDashboard} />;
   }
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="user-info">
-          <h1>Welcome, {user?.first_name}!</h1>
-          <p>Student Dashboard</p>
+          <img
+            src={user?.profile_picture ? (user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:8000${user.profile_picture}`) : '/default-avatar.svg'}
+            alt="Profile"
+            className="profile-avatar"
+          />
+          <div>
+            <h1>Welcome, {user?.first_name}!</h1>
+            <p>Student Dashboard</p>
+          </div>
         </div>
         <button onClick={handleLogout} className="logout-btn">
           Logout
@@ -99,7 +128,7 @@ const StudentDashboard = () => {
               <div className="dashboard-card">
                 <h3>Profile</h3>
                 <p>Manage your account settings</p>
-                <button className="card-btn">Edit Profile</button>
+                <button className="card-btn" onClick={handleEditProfile}>Edit Profile</button>
               </div>
             </div>
 

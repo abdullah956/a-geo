@@ -24,6 +24,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=30)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+    profile_picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     
     # Remove username field since we're using email
     username = None

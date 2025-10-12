@@ -80,7 +80,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='teacher.get_full_name', read_only=True)
     enrolled_students_count = serializers.ReadOnlyField()
     is_full = serializers.ReadOnlyField()
-    enrollments = EnrollmentSerializer(many=True, read_only=True, source='enrollments')
+    enrollments = EnrollmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Course

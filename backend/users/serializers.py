@@ -53,8 +53,15 @@ class UserSerializer(serializers.ModelSerializer):
     Serializer for user profile
     """
     full_name = serializers.ReadOnlyField()
-    
+    profile_picture = serializers.ImageField(required=False, allow_null=True, allow_empty_file=True)
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'role', 'is_active', 'date_joined')
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'role', 'is_active', 'date_joined', 'profile_picture')
         read_only_fields = ('id', 'email', 'date_joined')
+
+    def update(self, instance, validated_data):
+        # Handle profile picture update
+        if 'profile_picture' in validated_data:
+            instance.profile_picture = validated_data.pop('profile_picture')
+        return super().update(instance, validated_data)
