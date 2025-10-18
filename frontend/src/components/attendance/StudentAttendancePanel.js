@@ -96,14 +96,18 @@ const StudentAttendancePanel = ({ onBack }) => {
 
   const requestLocationPermission = async () => {
     try {
-      const hasPermission = await locationService.requestLocationPermission();
-      setLocationPermission(hasPermission);
-      if (!hasPermission) {
-        setError('Location permission was denied. Please enable location access to mark attendance.');
-      }
+      // Directly try to get location - this will trigger browser permission dialog
+      await locationService.getCurrentLocation();
+      setLocationPermission(true);
+      setError(null); // Clear any previous errors
     } catch (error) {
       console.error('Error requesting location permission:', error);
-      setError('Failed to get location permission');
+      setLocationPermission(false);
+      if (error.message === 'Location access denied by user') {
+        setError('Location permission was denied. Please allow location access to mark attendance.');
+      } else {
+        setError('Failed to get location permission. Please try again.');
+      }
     }
   };
 
@@ -199,10 +203,17 @@ const StudentAttendancePanel = ({ onBack }) => {
                       <span className="check-icon">✓</span>
                       <span>Attendance Marked</span>
                     </div>
+                  ) : !locationPermission ? (
+                    <button
+                      onClick={requestLocationPermission}
+                      className="enable-location-btn"
+                    >
+                      Enable Location Access
+                    </button>
                   ) : (
                     <button
                       onClick={() => handleMarkAttendance(session)}
-                      disabled={!locationPermission || markingAttendance === session.id}
+                      disabled={markingAttendance === session.id}
                       className="mark-attendance-btn"
                     >
                       {markingAttendance === session.id ? 'Marking...' : 'Mark Attendance'}

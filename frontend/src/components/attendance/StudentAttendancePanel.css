@@ -232,6 +232,23 @@
   cursor: not-allowed;
 }
 
+.enable-location-btn {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 180px;
+}
+
+.enable-location-btn:hover {
+  background: #3182ce;
+}
+
 .attendance-marked {
   display: flex;
   align-items: center;

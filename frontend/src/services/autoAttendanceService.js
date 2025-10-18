@@ -168,18 +168,9 @@ export const autoAttendanceService = {
    */
   async requestLocationPermission() {
     try {
-      // Check if location is already available
-      if (locationService.isLocationAvailable()) {
-        const hasPermission = await locationService.requestLocationPermission();
-        if (hasPermission) {
-          return true;
-        }
-      }
-
-      // Show permission request modal
-      return new Promise((resolve) => {
-        this.showLocationPermissionModal(resolve);
-      });
+      // Directly try to get location - this will trigger browser permission dialog
+      await locationService.getCurrentLocation();
+      return true;
     } catch (error) {
       console.error('Error requesting location permission:', error);
       return false;
@@ -362,47 +353,6 @@ export const autoAttendanceService = {
     }
   },
 
-  /**
-   * Show location permission modal
-   * @param {Function} callback - Callback function
-   */
-  showLocationPermissionModal(callback) {
-    const modal = document.createElement('div');
-    modal.className = 'location-permission-modal';
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>📍 Location Access Required</h3>
-        </div>
-        <div class="modal-body">
-          <p>To mark your attendance automatically, we need access to your location to verify you're in the classroom.</p>
-          <p><strong>This helps ensure accurate attendance tracking.</strong></p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="this.closest('.location-permission-modal').remove()">
-            Cancel
-          </button>
-          <button class="btn-primary" onclick="this.enableLocation()">
-            Enable Location
-          </button>
-        </div>
-      </div>
-    `;
-
-    // Add click handler for enable location button
-    modal.querySelector('.btn-primary').onclick = async () => {
-      try {
-        const hasPermission = await locationService.requestLocationPermission();
-        modal.remove();
-        if (callback) callback(hasPermission);
-      } catch (error) {
-        console.error('Error enabling location:', error);
-        if (callback) callback(false);
-      }
-    };
-
-    document.body.appendChild(modal);
-  },
 
   /**
    * Show success modal

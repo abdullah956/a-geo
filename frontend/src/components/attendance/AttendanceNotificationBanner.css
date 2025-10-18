@@ -71,6 +71,23 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
+.enable-location-btn {
+  background: rgba(66, 153, 225, 0.8);
+  color: white;
+  border: 1px solid rgba(66, 153, 225, 0.9);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.enable-location-btn:hover {
+  background: rgba(66, 153, 225, 1);
+  border-color: rgba(66, 153, 225, 1);
+}
+
 .dismiss-btn {
   background: none;
   border: none;

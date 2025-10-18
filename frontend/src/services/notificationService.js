@@ -69,26 +69,6 @@ export const notificationService = {
     return notification;
   },
 
-  /**
-   * Show location permission notification
-   */
-  showLocationPermissionNotification: () => {
-    if (Notification.permission !== 'granted') {
-      return;
-    }
-
-    const notification = new Notification('Location Access Required', {
-      body: 'Please allow location access to mark your attendance automatically',
-      icon: '/favicon.ico',
-      requireInteraction: true
-    });
-
-    setTimeout(() => {
-      notification.close();
-    }, 10000);
-
-    return notification;
-  },
 
   /**
    * Show attendance result notification
