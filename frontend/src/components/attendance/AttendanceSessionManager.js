@@ -12,24 +12,37 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [stats, setStats] = useState(null);
   const [showQRCode, setShowQRCode] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 5;
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(currentPage);
     fetchStats();
-  }, []);
+  }, [currentPage]);
 
-  const fetchSessions = async () => {
+  const fetchSessions = async (page = 1) => {
     try {
-      const sessionsData = await attendanceService.getSessions();
+      setLoading(true);
+      const sessionsData = await attendanceService.getSessions(page, pageSize);
       console.log('Sessions data received:', sessionsData);
+      
       // Handle paginated response
       const sessions = sessionsData?.results || sessionsData || [];
       console.log('Processed sessions:', sessions);
       setSessions(Array.isArray(sessions) ? sessions : []);
       
+      // Set pagination data
+      if (sessionsData?.count !== undefined) {
+        setTotalCount(sessionsData.count);
+        setTotalPages(Math.ceil(sessionsData.count / pageSize));
+      }
+      
       const activeData = await attendanceService.getActiveSessions();
       console.log('Active sessions data received:', activeData);
-      console.log('First active session:', activeData?.[0]);
       setActiveSessions(Array.isArray(activeData) ? activeData : []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
@@ -51,9 +64,10 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
 
   const handleCreateSession = async (sessionData) => {
     try {
-      setSessions(prev => [sessionData, ...(prev || [])]);
-      setActiveSessions(prev => [sessionData, ...(prev || [])]);
       setShowCreateForm(false);
+      setCurrentPage(1);
+      await fetchSessions(1);
+      await fetchStats();
     } catch (error) {
       console.error('Error creating session:', error);
     }
@@ -62,17 +76,9 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
   const handleEndSession = async (sessionId) => {
     try {
       await attendanceService.endSession(sessionId);
-      setSessions(prev => 
-        (prev || []).map(session => 
-          session.id === sessionId 
-            ? { ...session, status: 'ended', ended_at: new Date().toISOString() }
-            : session
-        )
-      );
-      setActiveSessions(prev => 
-        (prev || []).filter(session => session.id !== sessionId)
-      );
       setSelectedSession(null);
+      await fetchSessions(currentPage);
+      await fetchStats();
     } catch (error) {
       console.error('Error ending session:', error);
     }
@@ -224,29 +230,71 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
 
       <div className="sessions-section">
         <div className="section-header">
-          <h3>Recent Sessions ({sessions.length})</h3>
+          <h3>Recent Sessions ({totalCount})</h3>
         </div>
         
         {sessions.length > 0 ? (
-          <div className="sessions-list">
-            {sessions.slice(0, 5).map(session => (
-              <div key={session.id} className="session-item">
-                <div className="session-info">
-                  <h4>{session.title || 'Untitled Session'}</h4>
-                  <p>{session.course_code || 'N/A'} • {session.classroom_name || 'N/A'}</p>
-                  <p>Started: {formatDate(session.started_at)}</p>
+          <>
+            <div className="sessions-list">
+              {sessions.map(session => (
+                <div key={session.id} className="session-item">
+                  <div className="session-info">
+                    <h4>{session.title || 'Untitled Session'}</h4>
+                    <p>{session.course_code || 'N/A'} • {session.classroom_name || 'N/A'}</p>
+                    <p>Started: {formatDate(session.started_at)}</p>
+                  </div>
+                  <div className="session-meta">
+                    <span className={`status-badge ${getStatusBadge(session.status)}`}>
+                      {session.status?.toUpperCase() || 'UNKNOWN'}
+                    </span>
+                    <span className="attendance-count">
+                      {session.attendance_count || 0}/{session.total_enrolled || 0}
+                    </span>
+                  </div>
                 </div>
-                <div className="session-meta">
-                  <span className={`status-badge ${getStatusBadge(session.status)}`}>
-                    {session.status?.toUpperCase() || 'UNKNOWN'}
-                  </span>
-                  <span className="attendance-count">
-                    {session.attendance_count || 0}/{session.total_enrolled || 0}
-                  </span>
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  « First
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  ‹ Previous
+                </button>
+                
+                <div className="pagination-info">
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <span className="separator">•</span>
+                  <span>{totalCount} total sessions</span>
                 </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  Next ›
+                </button>
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  Last »
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="no-sessions">
             <h4>No Sessions Yet</h4>

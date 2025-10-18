@@ -2,9 +2,14 @@ import api from './api';
 
 export const attendanceService = {
   // Get all attendance sessions for current user
-  getSessions: async () => {
+  getSessions: async (page = 1, pageSize = 5) => {
     try {
-      const response = await api.get('/attendance/sessions/');
+      const response = await api.get('/attendance/sessions/', {
+        params: {
+          page: page,
+          page_size: pageSize
+        }
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

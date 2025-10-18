@@ -478,6 +478,58 @@
   100% { transform: rotate(360deg); }
 }
 
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #4299e1;
+  color: white;
+  border-color: #4299e1;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  background: #f7fafc;
+  color: #cbd5e0;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  color: #4a5568;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pagination-info .separator {
+  color: #cbd5e0;
+}
+
 @media (max-width: 768px) {
   .attendance-session-manager {
     padding: 16px;
@@ -510,5 +562,25 @@
   
   .session-meta {
     align-self: flex-end;
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+  }
+  
+  .pagination-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .pagination-info {
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    text-align: center;
+    width: 100%;
+    font-size: 0.85rem;
   }
 }
