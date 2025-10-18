@@ -226,6 +226,15 @@
   background: #c53030;
 }
 
+.qr-btn {
+  background: #805ad5;
+  color: white;
+}
+
+.qr-btn:hover {
+  background: #6b46c1;
+}
+
 .sessions-list {
   display: flex;
   flex-direction: column;

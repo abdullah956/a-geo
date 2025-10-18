@@ -28,6 +28,27 @@
   background: #cbd5e0;
 }
 
+.qr-scan-btn {
+  background: #805ad5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.qr-scan-btn:hover {
+  background: #6b46c1;
+}
+
+.header-content {
+  flex: 1;
+}
+
 .header-content h2 {
   margin: 0 0 4px 0;
   color: #2d3748;

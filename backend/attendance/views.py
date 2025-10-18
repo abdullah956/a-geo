@@ -8,7 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Q, Count
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from .models import AttendanceSession, Attendance
+from .models import AttendanceSession, Attendance, AttendanceToken
+from .token_utils import generate_token, verify_token, refresh_token, deactivate_session_tokens
 from .serializers import (
     AttendanceSessionSerializer, AttendanceSessionCreateSerializer,
     AttendanceSerializer, AttendanceMarkSerializer,
@@ -537,3 +538,240 @@ def get_attendance_stats(request):
     }
     
     return Response(stats)
+
+
+# ============================================================================
+# QR CODE TOKEN ENDPOINTS
+# ============================================================================
+
+@extend_schema(
+    operation_id='generate_qr_token',
+    summary='Generate QR code token for attendance session',
+    description='Teachers can generate a QR code token for their active attendance session.',
+    responses={
+        200: OpenApiExample(
+            'Success',
+            value={
+                'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                'token_hash': 'abc123...',
+                'expires_at': '2025-01-12T10:15:00Z',
+                'qr_code': 'data:image/png;base64,...',
+                'token_id': 1
+            }
+        ),
+        403: OpenApiExample(
+            'Forbidden',
+            value={'detail': 'You do not have permission to perform this action.'}
+        ),
+        404: OpenApiExample(
+            'Not Found',
+            value={'detail': 'Not found.'}
+        )
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsTeacherOrAdmin])
+def generate_qr_token_view(request, session_id):
+    """
+    Generate a QR code token for an attendance session
+    """
+    session = get_object_or_404(AttendanceSession, id=session_id)
+    
+    # Check if user is the teacher of this session
+    if request.user.role == 'teacher' and session.teacher != request.user:
+        raise PermissionDenied("You are not the teacher of this session")
+    
+    # Check if session is active
+    if not session.is_active:
+        return Response(
+            {'error': 'Session is not active'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Get duration from request (default 10 minutes)
+    duration_minutes = request.data.get('duration_minutes', 10)
+    
+    # Generate token
+    token_data = generate_token(session, duration_minutes=duration_minutes)
+    
+    logger.info(f"QR token generated for session {session.id} by {request.user.email}")
+    
+    return Response(token_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    operation_id='refresh_qr_token',
+    summary='Refresh QR code token',
+    description='Teachers can refresh/regenerate a QR code token for their session.',
+    responses={
+        200: OpenApiExample(
+            'Success',
+            value={
+                'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                'token_hash': 'abc123...',
+                'expires_at': '2025-01-12T10:15:00Z',
+                'qr_code': 'data:image/png;base64,...',
+                'token_id': 2
+            }
+        )
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsTeacherOrAdmin])
+def refresh_qr_token_view(request, session_id):
+    """
+    Refresh QR code token for a session
+    """
+    session = get_object_or_404(AttendanceSession, id=session_id)
+    
+    # Check if user is the teacher of this session
+    if request.user.role == 'teacher' and session.teacher != request.user:
+        raise PermissionDenied("You are not the teacher of this session")
+    
+    # Get old token from request (optional)
+    old_token = request.data.get('old_token', None)
+    
+    # Refresh token
+    token_data = refresh_token(session, old_token)
+    
+    logger.info(f"QR token refreshed for session {session.id} by {request.user.email}")
+    
+    return Response(token_data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    operation_id='verify_qr_token',
+    summary='Verify QR code token and mark attendance',
+    description='Students can verify a QR code token and mark their attendance.',
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'token': {'type': 'string', 'description': 'JWT token from QR code'},
+                'latitude': {'type': 'number', 'description': 'Student latitude (optional)'},
+                'longitude': {'type': 'number', 'description': 'Student longitude (optional)'}
+            },
+            'required': ['token']
+        }
+    },
+    responses={
+        200: OpenApiExample(
+            'Success',
+            value={
+                'message': 'Attendance marked successfully',
+                'attendance': {...},
+                'session': {...}
+            }
+        ),
+        400: OpenApiExample(
+            'Bad Request',
+            value={'error': 'Invalid or expired token'}
+        )
+    }
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def verify_qr_token_view(request):
+    """
+    Verify QR code token and mark attendance
+    """
+    if request.user.role != 'student':
+        return Response(
+            {'error': 'Only students can mark attendance'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    token_string = request.data.get('token')
+    if not token_string:
+        return Response(
+            {'error': 'Token is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verify token
+    payload = verify_token(token_string)
+    if not payload:
+        return Response(
+            {'error': 'Invalid or expired token'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Get session from payload
+    session_id = payload.get('session_id')
+    session = get_object_or_404(AttendanceSession, id=session_id)
+    
+    # Check if session is still active
+    if not session.is_active:
+        return Response(
+            {'error': 'Session is no longer active'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Check if student is enrolled
+    if not Enrollment.objects.filter(
+        student=request.user,
+        course=session.course,
+        is_active=True
+    ).exists():
+        return Response(
+            {'error': 'You are not enrolled in this course'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Get location data (optional)
+    latitude = request.data.get('latitude', 0)
+    longitude = request.data.get('longitude', 0)
+    
+    # Calculate distance if location provided
+    distance = 0
+    location_verified = True  # QR code implies presence
+    
+    if latitude != 0 and longitude != 0:
+        from .views import calculate_distance
+        distance = calculate_distance(
+            session.classroom_latitude,
+            session.classroom_longitude,
+            latitude,
+            longitude
+        )
+        location_verified = distance <= session.allowed_radius
+    
+    # Create or update attendance
+    attendance, created = Attendance.objects.get_or_create(
+        session=session,
+        student=request.user,
+        defaults={
+            'is_present': True,
+            'status': 'present',
+            'location_verified': location_verified,
+            'student_latitude': latitude if latitude != 0 else None,
+            'student_longitude': longitude if longitude != 0 else None,
+            'distance_from_classroom': distance if distance > 0 else None,
+            'marked_at': timezone.now()
+        }
+    )
+    
+    if not created:
+        # Update existing attendance
+        attendance.is_present = True
+        attendance.status = 'present'
+        attendance.location_verified = location_verified
+        attendance.marked_at = timezone.now()
+        if latitude != 0:
+            attendance.student_latitude = latitude
+            attendance.student_longitude = longitude
+        if distance > 0:
+            attendance.distance_from_classroom = distance
+        attendance.save()
+    
+    logger.info(f"Attendance marked via QR code for {request.user.email} in session {session.id}")
+    
+    return Response({
+        'message': 'Attendance marked successfully',
+        'attendance': AttendanceSerializer(attendance).data,
+        'session': {
+            'id': session.id,
+            'title': session.title,
+            'course_code': session.course.code
+        }
+    }, status=status.HTTP_200_OK)

@@ -19,4 +19,9 @@ urlpatterns = [
     
     # Statistics and reporting
     path('stats/', views.get_attendance_stats, name='attendance-stats'),
+    
+    # QR Code Token endpoints
+    path('sessions/<int:session_id>/generate-token/', views.generate_qr_token_view, name='generate-qr-token'),
+    path('sessions/<int:session_id>/refresh-token/', views.refresh_qr_token_view, name='refresh-qr-token'),
+    path('verify-token/', views.verify_qr_token_view, name='verify-qr-token'),
 ]

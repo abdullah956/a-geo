@@ -250,3 +250,75 @@ class Attendance(models.Model):
         
         late_threshold = self.session.started_at + timezone.timedelta(minutes=15)
         return self.marked_at > late_threshold
+
+
+class AttendanceToken(models.Model):
+    """
+    QR code token for attendance marking
+    """
+    session = models.ForeignKey(
+        AttendanceSession,
+        on_delete=models.CASCADE,
+        related_name='tokens',
+        help_text="Attendance session this token belongs to"
+    )
+    token = models.CharField(
+        max_length=500,
+        unique=True,
+        help_text="JWT token for attendance verification"
+    )
+    token_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        help_text="SHA-256 hash of the token for quick lookup"
+    )
+    
+    # Token validity
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(help_text="Token expiration time")
+    is_active = models.BooleanField(default=True, help_text="Whether token is still valid")
+    
+    # Usage tracking
+    used_count = models.PositiveIntegerField(default=0, help_text="Number of times token was used")
+    max_uses = models.PositiveIntegerField(default=0, help_text="Maximum allowed uses (0 = unlimited)")
+    
+    class Meta:
+        db_table = 'attendance_tokens'
+        verbose_name = 'Attendance Token'
+        verbose_name_plural = 'Attendance Tokens'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token_hash']),
+            models.Index(fields=['session', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"Token for {self.session.title} (expires: {self.expires_at})"
+    
+    @property
+    def is_expired(self):
+        """Check if token has expired"""
+        return timezone.now() > self.expires_at
+    
+    @property
+    def is_valid(self):
+        """Check if token is valid (active, not expired, under max uses)"""
+        if not self.is_active or self.is_expired:
+            return False
+        
+        if self.max_uses > 0 and self.used_count >= self.max_uses:
+            return False
+        
+        return True
+    
+    def mark_used(self):
+        """Mark token as used"""
+        self.used_count += 1
+        self.save(update_fields=['used_count'])
+        logger.info(f"Token {self.id} used ({self.used_count} times)")
+    
+    def deactivate(self):
+        """Deactivate token"""
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+        logger.info(f"Token {self.id} deactivated")

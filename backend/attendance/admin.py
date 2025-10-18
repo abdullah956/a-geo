@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import AttendanceSession, Attendance
+from .models import AttendanceSession, Attendance, AttendanceToken
 
 
 @admin.register(AttendanceSession)
@@ -66,3 +66,29 @@ class AttendanceAdmin(admin.ModelAdmin):
             return f"{obj.distance_from_classroom:.1f}m"
         return "N/A"
     distance_display.short_description = 'Distance from Classroom'
+
+
+@admin.register(AttendanceToken)
+class AttendanceTokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'session', 'is_active', 'is_valid_display', 
+        'created_at', 'expires_at', 'used_count', 'max_uses'
+    ]
+    list_filter = ['is_active', 'created_at', 'expires_at']
+    search_fields = ['session__title', 'session__course__code', 'token_hash']
+    readonly_fields = ['token', 'token_hash', 'created_at', 'used_count']
+    
+    fieldsets = (
+        ('Token Information', {
+            'fields': ('session', 'token', 'token_hash')
+        }),
+        ('Validity', {
+            'fields': ('is_active', 'created_at', 'expires_at', 'max_uses', 'used_count')
+        })
+    )
+    
+    def is_valid_display(self, obj):
+        if obj.is_valid:
+            return format_html('<span style="color: green;">✓ Valid</span>')
+        return format_html('<span style="color: red;">✗ Invalid</span>')
+    is_valid_display.short_description = 'Valid'

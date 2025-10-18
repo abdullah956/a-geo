@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { attendanceService } from '../../services/attendanceService';
 import { locationService } from '../../services/locationService';
+import QRCodeScanner from './QRCodeScanner';
 import './StudentAttendancePanel.css';
 
 const StudentAttendancePanel = ({ onBack }) => {
@@ -9,6 +10,7 @@ const StudentAttendancePanel = ({ onBack }) => {
   const [locationPermission, setLocationPermission] = useState(null);
   const [markingAttendance, setMarkingAttendance] = useState(null);
   const [error, setError] = useState(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   useEffect(() => {
     fetchActiveSessions();
@@ -115,6 +117,12 @@ const StudentAttendancePanel = ({ onBack }) => {
     return new Date(dateString).toLocaleString();
   };
 
+  const handleQRSuccess = (result) => {
+    // Refresh sessions after successful QR scan
+    fetchActiveSessions();
+    setError(null);
+  };
+
   if (loading) {
     return (
       <div className="attendance-panel-loading">
@@ -134,6 +142,9 @@ const StudentAttendancePanel = ({ onBack }) => {
           <h2>Attendance</h2>
           <p>Mark your attendance for active sessions</p>
         </div>
+        <button onClick={() => setShowQRScanner(true)} className="qr-scan-btn">
+          📱 Scan QR Code
+        </button>
       </div>
 
       {error && (
@@ -239,6 +250,13 @@ const StudentAttendancePanel = ({ onBack }) => {
             <span>Location access enabled</span>
           </div>
         </div>
+      )}
+
+      {showQRScanner && (
+        <QRCodeScanner
+          onClose={() => setShowQRScanner(false)}
+          onSuccess={handleQRSuccess}
+        />
       )}
     </div>
   );

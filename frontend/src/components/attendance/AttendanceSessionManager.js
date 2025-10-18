@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { attendanceService } from '../../services/attendanceService';
 import AttendanceSessionForm from './AttendanceSessionForm';
+import QRCodeDisplay from './QRCodeDisplay';
 import './AttendanceSessionManager.css';
 
 const AttendanceSessionManager = ({ courses, onBack }) => {
@@ -10,6 +11,7 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [stats, setStats] = useState(null);
+  const [showQRCode, setShowQRCode] = useState(null);
 
   useEffect(() => {
     fetchSessions();
@@ -190,6 +192,12 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
 
                 <div className="session-actions">
                   <button
+                    onClick={() => setShowQRCode(session)}
+                    className="action-btn qr-btn"
+                  >
+                    📱 Show QR Code
+                  </button>
+                  <button
                     onClick={() => setSelectedSession(session)}
                     className="action-btn view-btn"
                   >
@@ -326,6 +334,13 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {showQRCode && (
+        <QRCodeDisplay
+          session={showQRCode}
+          onClose={() => setShowQRCode(null)}
+        />
       )}
     </div>
   );
