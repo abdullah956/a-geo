@@ -19,6 +19,7 @@ urlpatterns = [
     
     # Statistics and reporting
     path('stats/', views.get_attendance_stats, name='attendance-stats'),
+    path('sessions/<int:session_id>/export/', views.export_session_to_excel, name='export-session'),
     
     # QR Code Token endpoints
     path('sessions/<int:session_id>/generate-token/', views.generate_qr_token_view, name='generate-qr-token'),

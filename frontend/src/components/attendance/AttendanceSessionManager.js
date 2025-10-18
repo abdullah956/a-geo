@@ -102,6 +102,39 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
     return statusClasses[status] || 'status-unknown';
   };
 
+  const handleExportToExcel = async (session) => {
+    try {
+      const response = await attendanceService.exportSessionToExcel(session.id);
+      
+      // Create blob from response
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename
+      const fileName = `attendance_${session.course_code}_${session.title}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.setAttribute('download', fileName);
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('Excel file downloaded successfully');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export attendance data. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="attendance-manager-loading">
@@ -250,6 +283,13 @@ const AttendanceSessionManager = ({ courses, onBack }) => {
                     <span className="attendance-count">
                       {session.attendance_count || 0}/{session.total_enrolled || 0}
                     </span>
+                    <button
+                      onClick={() => handleExportToExcel(session)}
+                      className="export-btn"
+                      title="Export to Excel"
+                    >
+                      📊 Export
+                    </button>
                   </div>
                 </div>
               ))}

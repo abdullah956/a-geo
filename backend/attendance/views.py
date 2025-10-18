@@ -8,7 +8,10 @@ from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Q, Count
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema, OpenApiExample
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 from .models import AttendanceSession, Attendance, AttendanceToken
 from .token_utils import generate_token, verify_token, refresh_token, deactivate_session_tokens
 from .serializers import (
@@ -547,6 +550,139 @@ def get_attendance_stats(request):
     }
     
     return Response(stats)
+
+
+@extend_schema(
+    operation_id='export_session_to_excel',
+    summary='Export session attendance to Excel',
+    description='Export detailed attendance data for a session to Excel file.',
+    responses={
+        200: OpenApiExample(
+            'Success',
+            value={'file': 'Excel file download'}
+        ),
+        403: OpenApiExample(
+            'Forbidden',
+            value={'detail': 'You do not have permission to perform this action.'}
+        )
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsTeacherOrAdmin])
+def export_session_to_excel(request, session_id):
+    """
+    Export session attendance data to Excel
+    """
+    session = get_object_or_404(AttendanceSession, id=session_id)
+    
+    # Check if user has access to this session
+    if request.user.role == 'teacher' and session.teacher != request.user:
+        raise PermissionDenied("You don't have access to this session")
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Attendance Report"
+    
+    # Add header information
+    ws['A1'] = "Attendance Report"
+    ws['A1'].font = Font(size=16, bold=True)
+    ws.merge_cells('A1:F1')
+    
+    ws['A2'] = f"Session: {session.title}"
+    ws['A3'] = f"Course: {session.course.code} - {session.course.title}"
+    ws['A4'] = f"Teacher: {session.teacher.get_full_name()}"
+    ws['A5'] = f"Classroom: {session.classroom_name}"
+    ws['A6'] = f"Started: {session.started_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    if session.ended_at:
+        ws['A7'] = f"Ended: {session.ended_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    ws['A8'] = f"Status: {session.status.upper()}"
+    
+    # Add column headers for attendance data
+    headers = ['#', 'Student ID', 'Student Name', 'Email', 'Status', 'Marked At', 'Location Verified', 'Distance (m)']
+    header_row = 10
+    
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=header_row, column=col)
+        cell.value = header
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Get all enrolled students
+    enrollments = Enrollment.objects.filter(
+        course=session.course,
+        is_active=True
+    ).select_related('student')
+    
+    # Get attendance records
+    attendance_records = Attendance.objects.filter(session=session).select_related('student')
+    attendance_dict = {att.student.id: att for att in attendance_records}
+    
+    # Fill in student data
+    row_num = header_row + 1
+    for idx, enrollment in enumerate(enrollments, start=1):
+        student = enrollment.student
+        attendance = attendance_dict.get(student.id)
+        
+        ws.cell(row=row_num, column=1).value = idx
+        ws.cell(row=row_num, column=2).value = student.username
+        ws.cell(row=row_num, column=3).value = student.get_full_name()
+        ws.cell(row=row_num, column=4).value = student.email
+        
+        if attendance and attendance.is_present:
+            ws.cell(row=row_num, column=5).value = "PRESENT"
+            ws.cell(row=row_num, column=5).font = Font(color="00B050", bold=True)
+            ws.cell(row=row_num, column=6).value = attendance.marked_at.strftime('%Y-%m-%d %H:%M:%S') if attendance.marked_at else 'N/A'
+            ws.cell(row=row_num, column=7).value = "Yes" if attendance.location_verified else "No"
+            ws.cell(row=row_num, column=8).value = round(attendance.distance_from_classroom, 2) if attendance.distance_from_classroom else 'N/A'
+        else:
+            ws.cell(row=row_num, column=5).value = "ABSENT"
+            ws.cell(row=row_num, column=5).font = Font(color="FF0000", bold=True)
+            ws.cell(row=row_num, column=6).value = "Not Marked"
+            ws.cell(row=row_num, column=7).value = "N/A"
+            ws.cell(row=row_num, column=8).value = "N/A"
+        
+        row_num += 1
+    
+    # Add summary
+    summary_row = row_num + 2
+    ws.cell(row=summary_row, column=1).value = "Summary:"
+    ws.cell(row=summary_row, column=1).font = Font(bold=True)
+    ws.cell(row=summary_row + 1, column=1).value = "Total Students:"
+    ws.cell(row=summary_row + 1, column=2).value = enrollments.count()
+    ws.cell(row=summary_row + 2, column=1).value = "Present:"
+    ws.cell(row=summary_row + 2, column=2).value = session.attendance_count
+    ws.cell(row=summary_row + 2, column=2).font = Font(color="00B050", bold=True)
+    ws.cell(row=summary_row + 3, column=1).value = "Absent:"
+    ws.cell(row=summary_row + 3, column=2).value = enrollments.count() - session.attendance_count
+    ws.cell(row=summary_row + 3, column=2).font = Font(color="FF0000", bold=True)
+    ws.cell(row=summary_row + 4, column=1).value = "Attendance Rate:"
+    attendance_rate = (session.attendance_count / enrollments.count() * 100) if enrollments.count() > 0 else 0
+    ws.cell(row=summary_row + 4, column=2).value = f"{attendance_rate:.1f}%"
+    
+    # Adjust column widths
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 15
+    ws.column_dimensions['C'].width = 25
+    ws.column_dimensions['D'].width = 30
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 20
+    ws.column_dimensions['G'].width = 18
+    ws.column_dimensions['H'].width = 15
+    
+    # Create response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"attendance_{session.course.code}_{session.title}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb.save(response)
+    
+    logger.info(f"Attendance data exported by {request.user.email} for session {session.id}")
+    
+    return response
 
 
 # ============================================================================

@@ -97,5 +97,17 @@ export const attendanceService = {
     } catch (error) {
       throw error.response?.data || error.message;
     }
+  },
+
+  // Export session attendance to Excel
+  exportSessionToExcel: async (sessionId) => {
+    try {
+      const response = await api.get(`/attendance/sessions/${sessionId}/export/`, {
+        responseType: 'blob'
+      });
+      return response;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
   }
 };
