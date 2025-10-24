@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { qrCodeService } from '../../services/qrCodeService';
 import './QRCodeDisplay.css';
 
@@ -9,9 +9,37 @@ const QRCodeDisplay = ({ session, onClose }) => {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
+  const generateQRCode = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await qrCodeService.generateToken(session.id, 10);
+      setQrData(data);
+    } catch (err) {
+      setError(err.error || 'Failed to generate QR code');
+    } finally {
+      setLoading(false);
+    }
+  }, [session.id]);
+
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await qrCodeService.refreshToken(session.id, qrData?.token);
+      setQrData(data);
+    } catch (err) {
+      setError(err.error || 'Failed to refresh QR code');
+    } finally {
+      setLoading(false);
+    }
+  }, [session.id, qrData?.token]);
+
   useEffect(() => {
     generateQRCode();
-  }, [session.id]);
+  }, [generateQRCode]);
 
   useEffect(() => {
     if (!qrData) return;
@@ -33,49 +61,21 @@ const QRCodeDisplay = ({ session, onClose }) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [qrData, autoRefresh]);
+  }, [qrData, autoRefresh, handleRefresh]);
 
-  const generateQRCode = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await qrCodeService.generateToken(session.id, 10);
-      setQrData(data);
-    } catch (err) {
-      setError(err.error || 'Failed to generate QR code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await qrCodeService.refreshToken(session.id, qrData?.token);
-      setQrData(data);
-    } catch (err) {
-      setError(err.error || 'Failed to refresh QR code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatTime = (seconds) => {
+  const formatTime = useCallback((seconds) => {
     if (seconds === null) return '--:--';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
-  const getTimerColor = () => {
+  const getTimerColor = useCallback(() => {
     if (timeRemaining === null) return '';
     if (timeRemaining <= 60) return 'timer-critical';
     if (timeRemaining <= 180) return 'timer-warning';
     return 'timer-ok';
-  };
+  }, [timeRemaining]);
 
   return (
     <div className="qr-code-modal-overlay">

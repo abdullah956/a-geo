@@ -48,14 +48,21 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
     course_title = serializers.CharField(source='course.title', read_only=True)
     course_code = serializers.CharField(source='course.code', read_only=True)
+    grade_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
         fields = [
             'id', 'student', 'student_name', 'course', 'course_title', 'course_code',
-            'enrolled_at', 'is_active', 'grade'
+            'enrolled_at', 'is_active', 'grade', 'grade_display'
         ]
         read_only_fields = ('id', 'enrolled_at')
+
+    def get_grade_display(self, obj):
+        """Format grade as percentage (e.g., 80/100%)"""
+        if obj.grade is not None:
+            return f"{obj.grade}/100%"
+        return None
 
     def validate(self, data):
         """Validate enrollment constraints"""
