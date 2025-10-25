@@ -86,7 +86,7 @@ const TeacherStudentsView = ({ onBack }) => {
   const courses = getUniqueCoursesFromStudents();
 
   return (
-    <div className="dashboard">
+    <div className="dashboard teacher-theme">
       <header className="dashboard-header">
         <div className="user-info">
           <h1>My Students</h1>

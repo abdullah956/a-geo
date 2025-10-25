@@ -77,7 +77,7 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard teacher-theme">
       <header className="dashboard-header">
         <div className="user-info">
           <img

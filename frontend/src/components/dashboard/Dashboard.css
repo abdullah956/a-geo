@@ -1,6 +1,36 @@
 .dashboard {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+/* Teacher Dashboard Theme */
+.dashboard.teacher-theme {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.dashboard.teacher-theme .card-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.dashboard.teacher-theme .card-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Teacher theme for other elements */
+.dashboard.teacher-theme .logout-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.dashboard.teacher-theme .logout-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.dashboard.teacher-theme .back-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.dashboard.teacher-theme .back-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 .dashboard-loading {
@@ -49,7 +79,7 @@
 }
 
 .logout-btn {
-  background: #dc3545;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -60,7 +90,7 @@
 }
 
 .logout-btn:hover {
-  background: #c82333;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
 }
 
 .dashboard-main {
@@ -122,7 +152,7 @@
 }
 
 .card-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -372,7 +402,7 @@
 }
 
 .back-btn {
-  background: #6c757d;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -384,7 +414,7 @@
 }
 
 .back-btn:hover {
-  background: #5a6268;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
 }
 
 .courses-grid {
@@ -1173,11 +1203,11 @@
 }
 
 .overall-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
 }
 
 .overview-header {

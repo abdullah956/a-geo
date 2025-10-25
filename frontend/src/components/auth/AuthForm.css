@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   padding: 20px;
 }
 
@@ -56,13 +56,13 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #3b82f6;
 }
 
 .submit-btn {
   width: 100%;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   border: none;
   border-radius: 5px;
@@ -99,14 +99,14 @@
 .switch-btn {
   background: none;
   border: none;
-  color: #667eea;
+  color: #3b82f6;
   cursor: pointer;
   text-decoration: underline;
   font-size: inherit;
 }
 
 .switch-btn:hover {
-  color: #764ba2;
+  color: #1e40af;
 }
 
 @media (max-width: 480px) {
