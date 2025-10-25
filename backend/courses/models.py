@@ -23,6 +23,11 @@ class Course(models.Model):
     )
 
     # Course details
+    classroom = models.CharField(
+        max_length=100,
+        default="TBD",
+        help_text="Assigned classroom (e.g., Room 101, Lab A)"
+    )
     max_students = models.PositiveIntegerField(default=50, help_text="Maximum number of students")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

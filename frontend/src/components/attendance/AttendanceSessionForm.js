@@ -20,10 +20,21 @@ const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // If course is changed, update classroom name automatically
+    if (name === 'course' && value) {
+      const selectedCourse = courses.find(course => course.id.toString() === value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        classroom_name: selectedCourse ? selectedCourse.classroom : ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -166,10 +177,10 @@ const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
             id="classroom_name"
             name="classroom_name"
             value={formData.classroom_name}
-            onChange={handleInputChange}
-            placeholder="e.g., Room 101, Lab A"
+            placeholder="Select a course to see classroom"
             required
-            className={errors.classroom_name ? 'error' : ''}
+            readOnly
+            className={`${errors.classroom_name ? 'error' : ''} readonly-field`}
           />
           {errors.classroom_name && (
             <span className="error-text">{errors.classroom_name}</span>
