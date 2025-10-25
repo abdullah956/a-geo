@@ -235,7 +235,7 @@ const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
               name="allowed_radius"
               value={formData.allowed_radius}
               onChange={handleInputChange}
-              min="10"
+              min="20"
               max="500"
               required
               className={errors.allowed_radius ? 'error' : ''}
@@ -253,7 +253,7 @@ const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
               name="scheduled_duration"
               value={formData.scheduled_duration}
               onChange={handleInputChange}
-              min="15"
+              min="5"
               max="300"
               required
               className={errors.scheduled_duration ? 'error' : ''}
