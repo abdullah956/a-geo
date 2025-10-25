@@ -16,8 +16,8 @@ class CourseSerializer(serializers.ModelSerializer):
     Serializer for Course model
     """
     teacher_name = serializers.CharField(source='teacher.get_full_name', read_only=True)
-    enrolled_students_count = serializers.ReadOnlyField()
-    is_full = serializers.ReadOnlyField()
+    enrolled_students_count = serializers.IntegerField(read_only=True)
+    is_full = serializers.BooleanField(read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
     class Meta:
@@ -85,8 +85,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     Detailed course serializer with enrollment information
     """
     teacher_name = serializers.CharField(source='teacher.get_full_name', read_only=True)
-    enrolled_students_count = serializers.ReadOnlyField()
-    is_full = serializers.ReadOnlyField()
+    enrolled_students_count = serializers.IntegerField(read_only=True)
+    is_full = serializers.BooleanField(read_only=True)
     enrollments = EnrollmentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -103,8 +103,8 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
     """
     Serializer for courses taught by a specific teacher
     """
-    enrolled_students_count = serializers.ReadOnlyField()
-    is_full = serializers.ReadOnlyField()
+    enrolled_students_count = serializers.IntegerField(read_only=True)
+    is_full = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Course

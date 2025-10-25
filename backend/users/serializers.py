@@ -52,7 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for user profile
     """
-    full_name = serializers.ReadOnlyField()
+    full_name = serializers.CharField(read_only=True)
     profile_picture = serializers.ImageField(required=False, allow_null=True, allow_empty_file=True)
 
     class Meta:

@@ -12,10 +12,10 @@ class AttendanceSessionSerializer(serializers.ModelSerializer):
     course = CourseSerializer(read_only=True)
     course_id = serializers.IntegerField(write_only=True)
     teacher = UserSerializer(read_only=True)
-    duration_minutes = serializers.ReadOnlyField()
-    attendance_count = serializers.ReadOnlyField()
-    total_enrolled = serializers.ReadOnlyField()
-    is_active = serializers.ReadOnlyField()
+    duration_minutes = serializers.FloatField(read_only=True)
+    attendance_count = serializers.IntegerField(read_only=True)
+    total_enrolled = serializers.IntegerField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = AttendanceSession
@@ -59,7 +59,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     session = AttendanceSessionSerializer(read_only=True)
     session_id = serializers.IntegerField(write_only=True)
-    is_late = serializers.ReadOnlyField()
+    is_late = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Attendance
@@ -103,10 +103,10 @@ class AttendanceSessionDetailSerializer(serializers.ModelSerializer):
     course = CourseSerializer(read_only=True)
     teacher = UserSerializer(read_only=True)
     attendances = AttendanceSerializer(many=True, read_only=True)
-    duration_minutes = serializers.ReadOnlyField()
-    attendance_count = serializers.ReadOnlyField()
-    total_enrolled = serializers.ReadOnlyField()
-    is_active = serializers.ReadOnlyField()
+    duration_minutes = serializers.FloatField(read_only=True)
+    attendance_count = serializers.IntegerField(read_only=True)
+    total_enrolled = serializers.IntegerField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = AttendanceSession
@@ -126,10 +126,10 @@ class AttendanceSessionListSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(source='course.code', read_only=True)
     course_title = serializers.CharField(source='course.title', read_only=True)
     teacher_name = serializers.CharField(source='teacher.full_name', read_only=True)
-    duration_minutes = serializers.ReadOnlyField()
-    attendance_count = serializers.ReadOnlyField()
-    total_enrolled = serializers.ReadOnlyField()
-    is_active = serializers.ReadOnlyField()
+    duration_minutes = serializers.FloatField(read_only=True)
+    attendance_count = serializers.IntegerField(read_only=True)
+    total_enrolled = serializers.IntegerField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = AttendanceSession

@@ -16,34 +16,10 @@ lms_logger = logging.getLogger('lms')
 
 
 @extend_schema(
-    operation_id='register_user',
     summary='Register a new user',
     description='Creates a new user account with the provided information. Returns user data and authentication token upon successful registration.',
     request=UserRegistrationSerializer,
-    responses={
-        201: UserSerializer,
-        400: OpenApiExample(
-            'Validation Error',
-            value={
-                'email': ['This field is required.'],
-                'password': ['This field is required.'],
-                'password_confirm': ['This field is required.']
-            }
-        )
-    },
-    examples=[
-        OpenApiExample(
-            'Registration Request',
-            value={
-                'email': 'user@example.com',
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'role': 'student',
-                'password': 'securepassword123',
-                'password_confirm': 'securepassword123'
-            }
-        )
-    ]
+    responses={201: UserSerializer}
 )
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -85,44 +61,10 @@ def register_view(request):
 
 
 @extend_schema(
-    operation_id='login_user',
     summary='Login user',
     description='Authenticates user with email and password. Returns user data and authentication token upon successful login.',
     request=UserLoginSerializer,
-    responses={
-        200: OpenApiExample(
-            'Login Success',
-            value={
-                'user': {
-                    'id': 1,
-                    'email': 'user@example.com',
-                    'first_name': 'John',
-                    'last_name': 'Doe',
-                    'full_name': 'John Doe',
-                    'role': 'student',
-                    'is_active': True,
-                    'date_joined': '2025-10-12T07:48:17.849268Z'
-                },
-                'token': '4598dd30ddcb8a3458c6e529bf6da046d2de2836',
-                'message': 'Login successful'
-            }
-        ),
-        400: OpenApiExample(
-            'Login Error',
-            value={
-                'non_field_errors': ['Invalid credentials']
-            }
-        )
-    },
-    examples=[
-        OpenApiExample(
-            'Login Request',
-            value={
-                'email': 'user@example.com',
-                'password': 'securepassword123'
-            }
-        )
-    ]
+    responses={200: UserSerializer}
 )
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -165,23 +107,10 @@ def login_view(request):
 
 
 @extend_schema(
-    operation_id='logout_user',
     summary='Logout user',
     description='Logout user by deleting their authentication token.',
-    responses={
-        200: OpenApiExample(
-            'Logout Success',
-            value={
-                'message': 'Logout successful'
-            }
-        ),
-        400: OpenApiExample(
-            'Logout Error',
-            value={
-                'message': 'Logout failed'
-            }
-        )
-    }
+    request=None,
+    responses={200: None}
 )
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
@@ -243,30 +172,9 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 @extend_schema(
-    operation_id='get_dashboard',
     summary='Get user dashboard',
     description='Get user dashboard data based on their role (student, teacher, admin).',
-    responses={
-        200: OpenApiExample(
-            'Dashboard Success',
-            value={
-                'user': {
-                    'id': 1,
-                    'email': 'user@example.com',
-                    'first_name': 'John',
-                    'last_name': 'Doe',
-                    'full_name': 'John Doe',
-                    'role': 'student',
-                    'is_active': True,
-                    'date_joined': '2025-10-12T07:48:17.849268Z'
-                },
-                'role': 'student',
-                'dashboard_type': 'student',
-                'message': 'Welcome to Student Dashboard',
-                'features': ['View Courses', 'Submit Assignments', 'Track Progress']
-            }
-        )
-    }
+    responses={200: None}
 )
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -338,30 +246,18 @@ def dashboard_view(request):
 
 
 @extend_schema(
-    operation_id='refresh_token',
     summary='Refresh JWT token',
     description='Refresh the access token using the refresh token.',
-    request=OpenApiExample(
-        'Refresh Token Request',
-        value={
-            'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'refresh': {'type': 'string', 'description': 'JWT refresh token'}
+            },
+            'required': ['refresh']
         }
-    ),
-    responses={
-        200: OpenApiExample(
-            'Token Refresh Success',
-            value={
-                'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
-                'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'
-            }
-        ),
-        400: OpenApiExample(
-            'Token Refresh Error',
-            value={
-                'detail': 'Token is blacklisted'
-            }
-        )
-    }
+    },
+    responses={200: None}
 )
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])

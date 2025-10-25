@@ -15,7 +15,7 @@ class UserAdmin(BaseUserAdmin):
     form = CustomUserChangeForm
     add_form = CustomUserCreationForm
     
-    list_display = ('email', 'first_name', 'last_name', 'role', 'is_active', 'date_joined', 'delete_button')
+    list_display = ('email', 'first_name', 'last_name', 'role', 'is_active', 'date_joined')
     list_filter = ('role', 'is_active', 'is_staff', 'date_joined')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
@@ -37,15 +37,6 @@ class UserAdmin(BaseUserAdmin):
     
     readonly_fields = ('date_joined', 'last_login')
     
-    def delete_button(self, obj):
-        """Add a delete button for each user"""
-        if obj.pk:
-            return format_html(
-                '<a class="button" href="javascript:void(0)" onclick="deleteUser({})">Delete</a>',
-                obj.pk
-            )
-        return '-'
-    delete_button.short_description = 'Actions'
     
     def delete_selected_users(self, request, queryset):
         """Custom action to safely delete selected users"""
@@ -156,5 +147,3 @@ class UserAdmin(BaseUserAdmin):
                 messages.ERROR
             )
     
-    class Media:
-        js = ('admin/js/user_admin.js',)

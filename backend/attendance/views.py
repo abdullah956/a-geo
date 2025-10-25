@@ -69,20 +69,11 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 
 @extend_schema(
-    operation_id='create_attendance_session',
     summary='Create attendance session',
     description='Create a new attendance session for a course. Only teachers can create sessions.',
     request=AttendanceSessionCreateSerializer,
     responses={
-        201: AttendanceSessionSerializer,
-        400: OpenApiExample(
-            'Validation Error',
-            value={'course_id': ['This field is required.']}
-        ),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
+        201: AttendanceSessionSerializer
     }
 )
 class AttendanceSessionCreateView(generics.CreateAPIView):
@@ -108,7 +99,6 @@ class AttendanceSessionCreateView(generics.CreateAPIView):
 
 
 @extend_schema(
-    operation_id='list_attendance_sessions',
     summary='List attendance sessions',
     description='Get list of attendance sessions. Teachers see their sessions, students see sessions for their courses.',
     responses={
@@ -147,15 +137,10 @@ class AttendanceSessionListView(generics.ListAPIView):
 
 
 @extend_schema(
-    operation_id='get_attendance_session',
     summary='Get attendance session details',
     description='Get detailed information about a specific attendance session.',
     responses={
-        200: AttendanceSessionDetailSerializer,
-        404: OpenApiExample(
-            'Not Found',
-            value={'detail': 'Not found.'}
-        )
+        200: AttendanceSessionDetailSerializer
     }
 )
 class AttendanceSessionDetailView(generics.RetrieveAPIView):
@@ -187,19 +172,10 @@ class AttendanceSessionDetailView(generics.RetrieveAPIView):
 
 
 @extend_schema(
-    operation_id='end_attendance_session',
     summary='End attendance session',
     description='End an active attendance session. Only the teacher who started the session can end it.',
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={'message': 'Attendance session ended successfully'}
-        ),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    request=None,
+    responses={200: AttendanceSessionSerializer}
 )
 @api_view(['POST'])
 @permission_classes([IsTeacherOrAdmin])
@@ -229,12 +205,9 @@ def end_attendance_session(request, session_id):
 
 
 @extend_schema(
-    operation_id='get_active_sessions',
     summary='Get active attendance sessions',
     description='Get all active attendance sessions for the current user.',
-    responses={
-        200: AttendanceSessionListSerializer(many=True)
-    }
+    responses={200: AttendanceSessionListSerializer(many=True)}
 )
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -273,29 +246,10 @@ def get_active_sessions(request):
 
 
 @extend_schema(
-    operation_id='mark_attendance',
     summary='Mark attendance',
     description='Mark attendance for a student in an active session with location verification.',
     request=AttendanceMarkSerializer,
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={
-                'message': 'Attendance marked successfully',
-                'attendance': {
-                    'id': 1,
-                    'is_present': True,
-                    'status': 'present',
-                    'location_verified': True,
-                    'distance_from_classroom': 25.5
-                }
-            }
-        ),
-        400: OpenApiExample(
-            'Validation Error',
-            value={'error': 'Location verification failed'}
-        )
-    }
+    responses={200: AttendanceSerializer}
 )
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
@@ -402,33 +356,9 @@ def mark_attendance(request):
 
 
 @extend_schema(
-    operation_id='get_student_notifications',
     summary='Get student notifications',
     description='Get active sessions and notifications for students.',
-    responses={
-        200: OpenApiExample(
-            'Student Notifications',
-            value={
-                'active_sessions': [
-                    {
-                        'id': 1,
-                        'title': 'Lecture 1',
-                        'course_code': 'CS101',
-                        'classroom_name': 'Room 101',
-                        'started_at': '2025-01-12T10:00:00Z',
-                        'allowed_radius': 50
-                    }
-                ],
-                'notifications': [
-                    {
-                        'type': 'attendance_session_started',
-                        'message': 'New attendance session started for CS101',
-                        'session_id': 1
-                    }
-                ]
-            }
-        )
-    }
+    responses={200: None}
 )
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -504,12 +434,9 @@ def get_student_notifications(request):
 
 
 @extend_schema(
-    operation_id='get_attendance_stats',
     summary='Get attendance statistics',
     description='Get attendance statistics for teachers and admins.',
-    responses={
-        200: AttendanceStatsSerializer
-    }
+    responses={200: AttendanceStatsSerializer}
 )
 @api_view(['GET'])
 @permission_classes([IsTeacherOrAdmin])
@@ -553,19 +480,9 @@ def get_attendance_stats(request):
 
 
 @extend_schema(
-    operation_id='export_session_to_excel',
     summary='Export session attendance to Excel',
     description='Export detailed attendance data for a session to Excel file.',
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={'file': 'Excel file download'}
-        ),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={200: None}
 )
 @api_view(['GET'])
 @permission_classes([IsTeacherOrAdmin])
@@ -690,29 +607,10 @@ def export_session_to_excel(request, session_id):
 # ============================================================================
 
 @extend_schema(
-    operation_id='generate_qr_token',
     summary='Generate QR code token for attendance session',
     description='Teachers can generate a QR code token for their active attendance session.',
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={
-                'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
-                'token_hash': 'abc123...',
-                'expires_at': '2025-01-12T10:15:00Z',
-                'qr_code': 'data:image/png;base64,...',
-                'token_id': 1
-            }
-        ),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        ),
-        404: OpenApiExample(
-            'Not Found',
-            value={'detail': 'Not found.'}
-        )
-    }
+    request=None,
+    responses={200: None}
 )
 @api_view(['POST'])
 @permission_classes([IsTeacherOrAdmin])
@@ -745,21 +643,10 @@ def generate_qr_token_view(request, session_id):
 
 
 @extend_schema(
-    operation_id='refresh_qr_token',
     summary='Refresh QR code token',
     description='Teachers can refresh/regenerate a QR code token for their session.',
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={
-                'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
-                'token_hash': 'abc123...',
-                'expires_at': '2025-01-12T10:15:00Z',
-                'qr_code': 'data:image/png;base64,...',
-                'token_id': 2
-            }
-        )
-    }
+    request=None,
+    responses={200: None}
 )
 @api_view(['POST'])
 @permission_classes([IsTeacherOrAdmin])
@@ -785,7 +672,6 @@ def refresh_qr_token_view(request, session_id):
 
 
 @extend_schema(
-    operation_id='verify_qr_token',
     summary='Verify QR code token and mark attendance',
     description='Students can verify a QR code token and mark their attendance.',
     request={
@@ -799,20 +685,7 @@ def refresh_qr_token_view(request, session_id):
             'required': ['token']
         }
     },
-    responses={
-        200: OpenApiExample(
-            'Success',
-            value={
-                'message': 'Attendance marked successfully',
-                'attendance': {...},
-                'session': {...}
-            }
-        ),
-        400: OpenApiExample(
-            'Bad Request',
-            value={'error': 'Invalid or expired token'}
-        )
-    }
+    responses={200: AttendanceSerializer}
 )
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])

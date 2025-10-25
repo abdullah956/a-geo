@@ -38,12 +38,9 @@ class IsTeacherOrAdmin(permissions.BasePermission):
 
 
 @extend_schema(
-    operation_id='list_courses',
     summary='List all courses',
     description='Get a list of all courses. Available to all authenticated users.',
-    responses={
-        200: CourseSerializer(many=True)
-    }
+    responses={200: CourseSerializer(many=True)}
 )
 class CourseListView(generics.ListAPIView):
     """
@@ -55,17 +52,10 @@ class CourseListView(generics.ListAPIView):
 
 
 @extend_schema(
-    operation_id='create_course',
     summary='Create a new course',
     description='Create a new course. Only admins can create courses.',
     request=CourseSerializer,
-    responses={
-        201: CourseSerializer,
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={201: CourseSerializer}
 )
 class CourseCreateView(generics.CreateAPIView):
     """
@@ -81,16 +71,9 @@ class CourseCreateView(generics.CreateAPIView):
 
 
 @extend_schema(
-    operation_id='course_detail',
     summary='Get course details',
     description='Get detailed information about a specific course including enrollments.',
-    responses={
-        200: CourseDetailSerializer,
-        404: OpenApiExample(
-            'Not Found',
-            value={'detail': 'Not found.'}
-        )
-    }
+    responses={200: CourseDetailSerializer}
 )
 class CourseDetailView(generics.RetrieveAPIView):
     """
@@ -102,17 +85,10 @@ class CourseDetailView(generics.RetrieveAPIView):
 
 
 @extend_schema(
-    operation_id='update_course',
     summary='Update a course',
     description='Update course information. Only admins can update courses.',
     request=CourseSerializer,
-    responses={
-        200: CourseSerializer,
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={200: CourseSerializer}
 )
 class CourseUpdateView(generics.UpdateAPIView):
     """
@@ -124,16 +100,9 @@ class CourseUpdateView(generics.UpdateAPIView):
 
 
 @extend_schema(
-    operation_id='delete_course',
     summary='Delete a course',
     description='Delete a course. Only admins can delete courses.',
-    responses={
-        204: OpenApiExample('No Content', value={}),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={204: None}
 )
 class CourseDeleteView(generics.DestroyAPIView):
     """
@@ -145,12 +114,9 @@ class CourseDeleteView(generics.DestroyAPIView):
 
 
 @extend_schema(
-    operation_id='teacher_courses',
     summary='Get teacher courses',
     description='Get all courses assigned to the current teacher.',
-    responses={
-        200: TeacherCourseSerializer(many=True)
-    }
+    responses={200: TeacherCourseSerializer(many=True)}
 )
 @api_view(['GET'])
 @permission_classes([IsTeacherOrAdmin])
@@ -171,21 +137,10 @@ def teacher_courses_view(request):
 
 
 @extend_schema(
-    operation_id='enroll_student',
     summary='Enroll student in course',
     description='Enroll a student in a course. Only admins can enroll students.',
     request=EnrollmentSerializer,
-    responses={
-        201: EnrollmentSerializer,
-        400: OpenApiExample(
-            'Bad Request',
-            value={'detail': 'Course is full' or 'Student already enrolled'}
-        ),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={201: EnrollmentSerializer}
 )
 class EnrollmentCreateView(generics.CreateAPIView):
     """
@@ -197,16 +152,9 @@ class EnrollmentCreateView(generics.CreateAPIView):
 
 
 @extend_schema(
-    operation_id='unenroll_student',
     summary='Unenroll student from course',
     description='Remove a student enrollment from a course. Only admins can unenroll students.',
-    responses={
-        204: OpenApiExample('No Content', value={}),
-        403: OpenApiExample(
-            'Forbidden',
-            value={'detail': 'You do not have permission to perform this action.'}
-        )
-    }
+    responses={204: None}
 )
 class EnrollmentDeleteView(generics.DestroyAPIView):
     """
@@ -218,12 +166,9 @@ class EnrollmentDeleteView(generics.DestroyAPIView):
 
 
 @extend_schema(
-    operation_id='course_enrollments',
     summary='Get course enrollments',
     description='Get all enrollments for a specific course.',
-    responses={
-        200: EnrollmentSerializer(many=True)
-    }
+    responses={200: EnrollmentSerializer(many=True)}
 )
 class CourseEnrollmentsView(generics.ListAPIView):
     """
