@@ -109,6 +109,30 @@
   color: #1e40af;
 }
 
+/* Success message styling */
+.success-message {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #a7f3d0;
+  font-size: 14px;
+}
+
+/* Auth description styling */
+.auth-description {
+  color: #6b7280;
+  margin-bottom: 24px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.auth-description strong {
+  color: #374151;
+  font-weight: 600;
+}
+
 @media (max-width: 480px) {
   .auth-form {
     padding: 1.5rem;

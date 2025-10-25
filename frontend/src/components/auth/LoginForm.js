@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService';
+import ForgotPassword from './ForgotPassword';
 import './AuthForm.css';
 
 const LoginForm = ({ onSwitchToRegister }) => {
@@ -9,6 +10,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -32,6 +34,16 @@ const LoginForm = ({ onSwitchToRegister }) => {
       setLoading(false);
     }
   };
+
+  // Show forgot password component if requested
+  if (showForgotPassword) {
+    return (
+      <ForgotPassword 
+        onBack={() => setShowForgotPassword(false)}
+        onSuccess={() => setShowForgotPassword(false)}
+      />
+    );
+  }
 
   return (
     <div className="auth-form-container">
@@ -72,6 +84,11 @@ const LoginForm = ({ onSwitchToRegister }) => {
         </form>
 
         <div className="auth-switch">
+          <p>
+            <button type="button" onClick={() => setShowForgotPassword(true)} className="switch-btn">
+              Forgot Password?
+            </button>
+          </p>
           <p>Don't have an account? 
             <button type="button" onClick={onSwitchToRegister} className="switch-btn">
               Register here

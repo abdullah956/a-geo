@@ -1,114 +1,149 @@
-import logging
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
-from .managers import UserManager
+import random
+import string
+from django.core.mail import send_mail
+from django.conf import settings
+import logging
 
-# Get logger instance
-auth_logger = logging.getLogger('users')
+logger = logging.getLogger(__name__)
 
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, username=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     """
-    Custom User model with email as the primary identifier
+    Custom User model with role-based authentication
     """
-    USER_ROLES = [
+    objects = UserManager()
+    
+    ROLE_CHOICES = [
         ('student', 'Student'),
         ('teacher', 'Teacher'),
         ('admin', 'Admin'),
     ]
     
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=USER_ROLES, default='student')
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-    profile_picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
-    
-    # Remove username field since we're using email
-    username = None
-    
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
+    profile_picture = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-    
-    objects = UserManager()
-    
+
     class Meta:
         db_table = 'users'
         verbose_name = 'User'
         verbose_name_plural = 'Users'
-    
+
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.email})"
-    
-    @property
-    def full_name(self):
+        return f"{self.email} ({self.get_role_display()})"
+
+    def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
-    
+
     def is_student(self):
         return self.role == 'student'
-    
+
     def is_teacher(self):
         return self.role == 'teacher'
-    
+
     def is_admin(self):
         return self.role == 'admin'
-    
+
     def save(self, *args, **kwargs):
-        """
-        Override save method to log user creation and updates
-        """
-        is_new = self.pk is None
-        
-        if is_new:
-            auth_logger.info(f"Creating new user: {self.email} with role: {self.role}")
-        else:
-            auth_logger.info(f"Updating user: {self.email} (ID: {self.pk})")
-        
+        # Set username to email if not provided
+        if not self.username:
+            self.username = self.email
         super().save(*args, **kwargs)
-        
-        if is_new:
-            auth_logger.info(f"User created successfully: {self.email} (ID: {self.pk}) at {timezone.now()}")
-        else:
-            auth_logger.info(f"User updated successfully: {self.email} (ID: {self.pk}) at {timezone.now()}")
+
+
+class PasswordResetOTP(models.Model):
+    """
+    Model to store OTP for password reset
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_otps')
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
     
-    def delete(self, *args, **kwargs):
-        """
-        Override delete method to handle related objects and log user deletion
-        """
-        auth_logger.warning(f"Deleting user: {self.email} (ID: {self.pk}) at {timezone.now()}")
-        
+    class Meta:
+        db_table = 'password_reset_otps'
+        verbose_name = 'Password Reset OTP'
+        verbose_name_plural = 'Password Reset OTPs'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"OTP for {self.user.email} - {self.otp_code}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # Only on creation
+            # Generate 6-digit OTP
+            self.otp_code = ''.join(random.choices(string.digits, k=6))
+            # Set expiry to 10 minutes from now
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        """Check if OTP is valid and not expired"""
+        return not self.is_used and timezone.now() <= self.expires_at
+
+    def send_otp_email(self):
+        """Send OTP via email"""
         try:
-            # Delete related JWT tokens first (if available)
-            try:
-                from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-                OutstandingToken.objects.filter(user=self).delete()
-            except Exception:
-                pass  # JWT models might not be available
+            subject = 'Password Reset OTP - AALA LMS'
+            message = f"""
+            Hello {self.user.get_full_name()},
             
-            # Delete user sessions
-            try:
-                from django.contrib.sessions.models import Session
-                Session.objects.filter(session_data__contains=f'"_auth_user_id":"{self.pk}"').delete()
-            except Exception:
-                pass
+            You requested a password reset for your AALA LMS account.
             
-            # Delete any other related objects that might cause foreign key constraints
-            # This ensures clean deletion without foreign key errors
+            Your OTP code is: {self.otp_code}
             
-            super().delete(*args, **kwargs)
-            auth_logger.warning(f"User deleted successfully: {self.email} (ID: {self.pk}) at {timezone.now()}")
+            This code will expire in 10 minutes.
             
+            If you didn't request this password reset, please ignore this email.
+            
+            Best regards,
+            AALA LMS Team
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [self.user.email],
+                fail_silently=False,
+            )
+            logger.info(f"OTP email sent to {self.user.email}")
+            return True
         except Exception as e:
-            auth_logger.error(f"Error deleting user {self.email}: {str(e)}")
-            # If there are still foreign key constraints, try to delete with CASCADE
-            try:
-                from django.db import transaction
-                with transaction.atomic():
-                    # Force delete with CASCADE
-                    super().delete(*args, **kwargs)
-                    auth_logger.warning(f"User force deleted: {self.email} (ID: {self.pk}) at {timezone.now()}")
-            except Exception as cascade_error:
-                auth_logger.error(f"Failed to delete user {self.email} even with CASCADE: {str(cascade_error)}")
-                raise cascade_error
+            logger.error(f"Failed to send OTP email to {self.user.email}: {str(e)}")
+            return False
+
+    @classmethod
+    def create_otp_for_user(cls, user):
+        """Create a new OTP for user and invalidate old ones"""
+        # Invalidate all existing OTPs for this user
+        cls.objects.filter(user=user, is_used=False).update(is_used=True)
+        
+        # Create new OTP
+        otp = cls.objects.create(user=user)
+        return otp
