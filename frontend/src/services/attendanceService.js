@@ -99,6 +99,16 @@ export const attendanceService = {
     }
   },
 
+  // Get student attendance percentage
+  getStudentAttendancePercentage: async () => {
+    try {
+      const response = await api.get('/attendance/student/percentage/');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   // Export session attendance to Excel
   exportSessionToExcel: async (sessionId) => {
     try {

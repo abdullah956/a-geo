@@ -4,6 +4,7 @@ import Profile from '../common/Profile';
 import StudentAttendancePanel from '../attendance/StudentAttendancePanel';
 import AttendanceNotificationBanner from '../attendance/AttendanceNotificationBanner';
 import { autoAttendanceService } from '../../services/autoAttendanceService';
+import StudentAttendanceDetails from './StudentAttendanceDetails';
 import './Dashboard.css';
 import '../../services/autoAttendanceService.css';
 
@@ -15,6 +16,7 @@ const StudentDashboard = () => {
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
+  const [showAttendanceDetails, setShowAttendanceDetails] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -58,6 +60,7 @@ const StudentDashboard = () => {
     setShowProfile(false);
     setShowEnrollments(false);
     setShowAttendance(false);
+    setShowAttendanceDetails(false);
     setSelectedEnrollment(null);
     // Refresh user data from localStorage to get updated profile picture
     const updatedUser = authService.getCurrentUser();
@@ -77,6 +80,10 @@ const StudentDashboard = () => {
 
   if (showAttendance) {
     return <StudentAttendancePanel onBack={handleBackToDashboard} />;
+  }
+
+  if (showAttendanceDetails) {
+    return <StudentAttendanceDetails onBack={handleBackToDashboard} />;
   }
 
   return (
@@ -117,6 +124,17 @@ const StudentDashboard = () => {
                   onClick={() => setShowEnrollments(true)}
                 >
                   View Courses
+                </button>
+              </div>
+
+              <div className="dashboard-card">
+                <h3>Attendance %</h3>
+                <p>View your attendance statistics</p>
+                <button
+                  className="card-btn"
+                  onClick={() => setShowAttendanceDetails(true)}
+                >
+                  View Details
                 </button>
               </div>
 

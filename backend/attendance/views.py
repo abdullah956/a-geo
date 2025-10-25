@@ -480,6 +480,95 @@ def get_attendance_stats(request):
 
 
 @extend_schema(
+    summary='Get student attendance percentage',
+    description='Get attendance percentage for the current student across all their enrolled courses.',
+    responses={200: None}
+)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_student_attendance_percentage(request):
+    """
+    Get attendance percentage for the current student
+    """
+    user = request.user
+    
+    # Ensure user is a student
+    if not user.is_student():
+        return Response(
+            {'error': 'Only students can view attendance percentage'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        # Get all courses the student is enrolled in
+        from courses.models import Enrollment
+        enrollments = Enrollment.objects.filter(student=user, is_active=True)
+        enrolled_courses = [enrollment.course for enrollment in enrollments]
+        
+        # Get all attendance sessions for the student's courses
+        all_sessions = AttendanceSession.objects.filter(
+            course__in=enrolled_courses,
+            status__in=['active', 'ended']  # Include both active and ended sessions
+        )
+        
+        # Calculate overall statistics
+        total_sessions = all_sessions.count()
+        
+        # Get student's attendance records for these sessions
+        student_attendances = Attendance.objects.filter(
+            session__in=all_sessions,
+            student=user
+        )
+        
+        # Count present attendances
+        present_count = student_attendances.filter(is_present=True).count()
+        
+        # Calculate percentage
+        overall_percentage = (present_count / total_sessions * 100) if total_sessions > 0 else 0
+        
+        # Calculate per-course statistics
+        course_stats = []
+        for course in enrolled_courses:
+            course_sessions = all_sessions.filter(course=course)
+            course_total_sessions = course_sessions.count()
+            
+            course_attendances = student_attendances.filter(session__course=course)
+            course_present_count = course_attendances.filter(is_present=True).count()
+            
+            course_percentage = (course_present_count / course_total_sessions * 100) if course_total_sessions > 0 else 0
+            
+            course_stats.append({
+                'course_id': course.id,
+                'course_code': course.code,
+                'course_title': course.title,
+                'total_sessions': course_total_sessions,
+                'attended_sessions': course_present_count,
+                'attendance_percentage': round(course_percentage, 2)
+            })
+        
+        # Sort courses by percentage (descending)
+        course_stats.sort(key=lambda x: x['attendance_percentage'], reverse=True)
+        
+        response_data = {
+            'overall_percentage': round(overall_percentage, 2),
+            'total_sessions': total_sessions,
+            'attended_sessions': present_count,
+            'missed_sessions': total_sessions - present_count,
+            'courses_count': len(enrolled_courses),
+            'course_statistics': course_stats
+        }
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error calculating attendance percentage for {user.email}: {str(e)}")
+        return Response(
+            {'error': 'Failed to calculate attendance percentage'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@extend_schema(
     summary='Export session attendance to Excel',
     description='Export detailed attendance data for a session to Excel file.',
     responses={200: None}
