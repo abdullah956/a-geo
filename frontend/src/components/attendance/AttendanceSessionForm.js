@@ -6,7 +6,7 @@ import './AttendanceSessionForm.css';
 const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
   const [formData, setFormData] = useState({
     course: '',
-    title: '',
+    title: 'lecture',
     description: '',
     classroom_name: '',
     classroom_latitude: '',
@@ -129,16 +129,19 @@ const AttendanceSessionForm = ({ onSessionCreated, onCancel, courses }) => {
 
         <div className="form-group">
           <label htmlFor="title">Session Title *</label>
-          <input
-            type="text"
+          <select
             id="title"
             name="title"
             value={formData.title}
             onChange={handleInputChange}
-            placeholder="e.g., Lecture 1, Lab Session"
             required
             className={errors.title ? 'error' : ''}
-          />
+          >
+            <option value="lecture">Lecture</option>
+            <option value="labs">Labs</option>
+            <option value="tests">Tests</option>
+            <option value="other">Other</option>
+          </select>
           {errors.title && (
             <span className="error-text">{errors.title}</span>
           )}
