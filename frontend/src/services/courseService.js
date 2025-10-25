@@ -21,6 +21,16 @@ class CourseService {
     }
   }
 
+  // Get teacher's students
+  async getTeacherStudents() {
+    try {
+      const response = await api.get('/courses/teacher/students/');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
+
   // Create a new course (admin only)
   async createCourse(courseData) {
     try {

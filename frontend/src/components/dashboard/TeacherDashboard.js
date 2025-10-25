@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authService } from '../../services/authService';
 import Profile from '../common/Profile';
 import AttendanceSessionManager from '../attendance/AttendanceSessionManager';
+import TeacherStudentsView from './TeacherStudentsView';
 import './Dashboard.css';
 
 const TeacherDashboard = () => {
@@ -12,6 +13,7 @@ const TeacherDashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
+  const [showStudents, setShowStudents] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -48,6 +50,7 @@ const TeacherDashboard = () => {
     setShowProfile(false);
     setShowCourses(false);
     setShowAttendance(false);
+    setShowStudents(false);
     setSelectedCourse(null);
     // Refresh user data from localStorage to get updated profile picture
     const updatedUser = authService.getCurrentUser();
@@ -67,6 +70,10 @@ const TeacherDashboard = () => {
 
   if (showAttendance) {
     return <AttendanceSessionManager courses={dashboardData?.courses || []} onBack={handleBackToDashboard} />;
+  }
+
+  if (showStudents) {
+    return <TeacherStudentsView onBack={handleBackToDashboard} />;
   }
 
   return (
@@ -109,15 +116,14 @@ const TeacherDashboard = () => {
               </div>
 
           <div className="dashboard-card">
-            <h3>Grade Assignments</h3>
-            <p>Review and grade student assignments</p>
-            <button className="card-btn">Grade Assignments</button>
-          </div>
-
-          <div className="dashboard-card">
             <h3>View Students</h3>
             <p>Monitor student progress and performance</p>
-            <button className="card-btn">View Students</button>
+            <button 
+              className="card-btn"
+              onClick={() => setShowStudents(true)}
+            >
+              View Students
+            </button>
           </div>
 
               <div className="dashboard-card">
@@ -131,11 +137,6 @@ const TeacherDashboard = () => {
                 </button>
               </div>
 
-              <div className="dashboard-card">
-                <h3>Analytics</h3>
-                <p>View teaching analytics and reports</p>
-                <button className="card-btn">View Analytics</button>
-              </div>
 
               <div className="dashboard-card">
                 <h3>Profile</h3>

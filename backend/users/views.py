@@ -208,7 +208,7 @@ def dashboard_view(request):
 
             dashboard_data.update({
                 'message': 'Welcome to Student Dashboard',
-                'features': ['View Courses', 'Submit Assignments', 'Track Progress'],
+                'features': ['View Courses', 'Mark Attendance', 'Manage Profile'],
                 'enrollments': enrollments_serializer.data,
                 'enrollments_count': student_enrollments.count()
             })
@@ -223,7 +223,7 @@ def dashboard_view(request):
 
             dashboard_data.update({
                 'message': 'Welcome to Teacher Dashboard',
-                'features': ['Manage Courses', 'Grade Assignments', 'View Students'],
+                'features': ['Manage Courses', 'View Students', 'Attendance Management'],
                 'courses': courses_serializer.data,
                 'courses_count': teacher_courses.count()
             })
@@ -231,7 +231,7 @@ def dashboard_view(request):
         elif user.is_admin():
             dashboard_data.update({
                 'message': 'Welcome to Admin Dashboard',
-                'features': ['Manage Users', 'System Settings', 'Analytics']
+                'features': ['Manage Users', 'System Settings']
             })
             auth_logger.info(f"Admin dashboard data provided for: {user.email}")
         

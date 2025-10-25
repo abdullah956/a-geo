@@ -120,39 +120,15 @@ const StudentDashboard = () => {
                 </button>
               </div>
 
-          <div className="dashboard-card">
-            <h3>Attendance</h3>
-            <p>Mark your attendance for active sessions</p>
-            <button 
-              className="card-btn"
-              onClick={() => setShowAttendance(true)}
-            >
-              Mark Attendance
-            </button>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Assignments</h3>
-            <p>Submit and track your assignments</p>
-            <button className="card-btn">View Assignments</button>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Progress</h3>
-            <p>Track your learning progress</p>
-            <button className="card-btn">View Progress</button>
-          </div>
-
               <div className="dashboard-card">
-                <h3>Assignments</h3>
-                <p>Submit and track your assignments</p>
-                <button className="card-btn">View Assignments</button>
-              </div>
-
-              <div className="dashboard-card">
-                <h3>Progress</h3>
-                <p>Track your learning progress</p>
-                <button className="card-btn">View Progress</button>
+                <h3>Attendance</h3>
+                <p>Mark your attendance for active sessions</p>
+                <button
+                  className="card-btn"
+                  onClick={() => setShowAttendance(true)}
+                >
+                  Mark Attendance
+                </button>
               </div>
 
               <div className="dashboard-card">

@@ -13,6 +13,7 @@ urlpatterns = [
 
     # Teacher-specific views
     path('teacher/courses/', views.teacher_courses_view, name='teacher-courses'),
+    path('teacher/students/', views.teacher_students_view, name='teacher-students'),
 
     # Enrollment management (admin only)
     path('enroll/', views.EnrollmentCreateView.as_view(), name='enrollment-create'),

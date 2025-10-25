@@ -46,6 +46,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     Serializer for Enrollment model
     """
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
+    student_email = serializers.CharField(source='student.email', read_only=True)
     course_title = serializers.CharField(source='course.title', read_only=True)
     course_code = serializers.CharField(source='course.code', read_only=True)
     grade_display = serializers.SerializerMethodField()
@@ -53,7 +54,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = [
-            'id', 'student', 'student_name', 'course', 'course_title', 'course_code',
+            'id', 'student', 'student_name', 'student_email', 'course', 'course_title', 'course_code',
             'enrolled_at', 'is_active', 'grade', 'grade_display'
         ]
         read_only_fields = ('id', 'enrolled_at')

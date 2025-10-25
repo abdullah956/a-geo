@@ -180,3 +180,39 @@ class CourseEnrollmentsView(generics.ListAPIView):
     def get_queryset(self):
         course_id = self.kwargs['course_id']
         return Enrollment.objects.filter(course_id=course_id, is_active=True)
+
+
+@extend_schema(
+    summary='Get teacher students',
+    description='Get all students enrolled in courses taught by the current teacher.',
+    responses={200: EnrollmentSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsTeacherOrAdmin])
+def teacher_students_view(request):
+    """
+    Get all students enrolled in courses taught by the current teacher
+    """
+    try:
+        # Get all courses taught by the current teacher
+        teacher_courses = Course.objects.filter(teacher=request.user, is_active=True)
+        
+        # Get all enrollments for these courses
+        enrollments = Enrollment.objects.filter(
+            course__in=teacher_courses,
+            is_active=True
+        ).select_related('student', 'course').order_by('course__code', 'student__last_name', 'student__first_name')
+        
+        serializer = EnrollmentSerializer(enrollments, many=True)
+        
+        return Response({
+            'students': serializer.data,
+            'total_students': enrollments.count(),
+            'courses_count': teacher_courses.count()
+        })
+        
+    except Exception as e:
+        return Response(
+            {'error': 'Failed to fetch students'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
