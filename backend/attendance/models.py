@@ -103,12 +103,47 @@ class AttendanceSession(models.Model):
             logger.info(f"Attendance session updated: {self.title} (ID: {self.pk}) at {timezone.now()}")
 
     def end_session(self):
-        """End the attendance session"""
+        """End the attendance session and mark unmarked students as absent"""
         if self.status == 'active':
             self.status = 'ended'
             self.ended_at = timezone.now()
             self.save()
+            
+            # Mark all unmarked students as absent
+            self.mark_unmarked_students_as_absent()
+            
             logger.info(f"Attendance session ended: {self.title} (ID: {self.pk}) at {timezone.now()}")
+    
+    def mark_unmarked_students_as_absent(self):
+        """Mark all students who didn't mark attendance as absent"""
+        from courses.models import Enrollment
+        
+        # Get all enrolled students for this session's course
+        enrolled_students = Enrollment.objects.filter(
+            course=self.course,
+            is_active=True
+        ).select_related('student')
+        
+        for enrollment in enrolled_students:
+            student = enrollment.student
+            
+            # Check if student already has an attendance record
+            attendance, created = Attendance.objects.get_or_create(
+                session=self,
+                student=student,
+                defaults={
+                    'is_present': False,
+                    'status': 'absent',
+                    'marked_at': None
+                }
+            )
+            
+            # If attendance record was just created or student didn't mark attendance
+            if created or not attendance.is_present:
+                attendance.is_present = False
+                attendance.status = 'absent'
+                attendance.save()
+                logger.info(f"Marked {student.email} as absent for session {self.title}")
 
     @property
     def is_active(self):
