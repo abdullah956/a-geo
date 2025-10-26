@@ -13,12 +13,25 @@ const StudentAttendancePanel = ({ onBack }) => {
   const [showQRScanner, setShowQRScanner] = useState(false);
 
   useEffect(() => {
-    fetchActiveSessions();
-    checkLocationPermission();
+    // Only fetch if user is authenticated
+    const isAuthenticated = !!localStorage.getItem('access');
+    if (isAuthenticated) {
+      fetchActiveSessions();
+      checkLocationPermission();
+    }
   }, []);
 
   const fetchActiveSessions = async () => {
     try {
+      // Check if user is still authenticated before making API call
+      const isAuthenticated = !!localStorage.getItem('access');
+      if (!isAuthenticated) {
+        console.log('User not authenticated, skipping sessions fetch');
+        setError('Please log in to view attendance sessions');
+        setLoading(false);
+        return;
+      }
+
       const notifications = await attendanceService.getStudentNotifications();
       console.log('Notifications data:', notifications);
       
@@ -29,7 +42,11 @@ const StudentAttendancePanel = ({ onBack }) => {
       setActiveSessions(unmarkedSessions);
     } catch (error) {
       console.error('Error fetching active sessions:', error);
-      setError('Failed to load attendance sessions');
+      if (error.response?.status === 401) {
+        setError('Please log in to view attendance sessions');
+      } else {
+        setError('Failed to load attendance sessions');
+      }
     } finally {
       setLoading(false);
     }

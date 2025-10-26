@@ -11,27 +11,38 @@ const AttendanceNotificationBanner = () => {
   const [locationPermission, setLocationPermission] = useState(null);
 
   useEffect(() => {
-    checkActiveSessions();
-    checkLocationPermission();
-    
-    // Check for active sessions every 30 seconds
-    const interval = setInterval(checkActiveSessions, 30000);
-    
-    // Listen for attendance marked events
-    const handleAttendanceMarked = () => {
+    // Only start checking if user is authenticated
+    const isAuthenticated = !!localStorage.getItem('access');
+    if (isAuthenticated) {
       checkActiveSessions();
-    };
-    
-    window.addEventListener('attendance-marked', handleAttendanceMarked);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('attendance-marked', handleAttendanceMarked);
-    };
+      checkLocationPermission();
+      
+      // Check for active sessions every 30 seconds
+      const interval = setInterval(checkActiveSessions, 30000);
+      
+      // Listen for attendance marked events
+      const handleAttendanceMarked = () => {
+        checkActiveSessions();
+      };
+      
+      window.addEventListener('attendance-marked', handleAttendanceMarked);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('attendance-marked', handleAttendanceMarked);
+      };
+    }
   }, []);
 
   const checkActiveSessions = async () => {
     try {
+      // Check if user is still authenticated before making API call
+      const isAuthenticated = !!localStorage.getItem('access');
+      if (!isAuthenticated) {
+        console.log('User not authenticated, skipping notifications check');
+        return;
+      }
+
       const notifications = await attendanceService.getStudentNotifications();
       console.log('Banner notifications data:', notifications);
       
@@ -43,6 +54,11 @@ const AttendanceNotificationBanner = () => {
       setShowBanner(unmarkedSessions.length > 0);
     } catch (error) {
       console.error('Error checking active sessions:', error);
+      // Don't show banner if there's an authentication error
+      if (error.response?.status === 401) {
+        console.log('Authentication error, hiding notifications');
+        setShowBanner(false);
+      }
     } finally {
       setLoading(false);
     }
