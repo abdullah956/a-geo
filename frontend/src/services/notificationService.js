@@ -39,17 +39,7 @@ export const notificationService = {
       icon: '/favicon.ico',
       badge: '/favicon.ico',
       tag: `attendance-${session.id}`,
-      requireInteraction: true,
-      actions: [
-        {
-          action: 'mark-attendance',
-          title: 'Mark Attendance'
-        },
-        {
-          action: 'dismiss',
-          title: 'Dismiss'
-        }
-      ]
+      requireInteraction: true
     });
 
     notification.onclick = () => {

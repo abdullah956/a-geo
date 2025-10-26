@@ -14,3 +14,5 @@ cryptography==46.0.3
 openpyxl==3.1.5
 pandas==2.3.3
 django-otp==1.6.2
+channels==4.1.0
+channels-redis==4.2.0

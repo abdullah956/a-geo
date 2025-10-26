@@ -20,6 +20,7 @@ from .serializers import (
     AttendanceSessionDetailSerializer, AttendanceSessionListSerializer,
     AttendanceStatsSerializer
 )
+from .websocket_service import websocket_service
 from courses.models import Course, Enrollment
 
 # Get logger instances
@@ -94,8 +95,16 @@ class AttendanceSessionCreateView(generics.CreateAPIView):
             logger.error(f"User {self.request.user.email} not assigned to course {course.code}")
             raise PermissionDenied("You are not assigned to this course")
         
-        serializer.save(teacher=self.request.user)
+        session = serializer.save(teacher=self.request.user)
         logger.info(f"Attendance session created by {self.request.user.email} for course {course.code}")
+        
+        # Send WebSocket notification to enrolled students
+        try:
+            enrolled_students = course.enrollments.filter(is_active=True).values_list('student_id', flat=True)
+            websocket_service.send_session_started_notification(session, list(enrolled_students))
+            logger.info(f"WebSocket notification sent for session {session.id} to {len(enrolled_students)} students")
+        except Exception as e:
+            logger.error(f"Failed to send WebSocket notification: {e}")
 
 
 @extend_schema(
@@ -197,6 +206,14 @@ def end_attendance_session(request, session_id):
     
     session.end_session()
     logger.info(f"Attendance session {session.title} ended by {request.user.email}")
+    
+    # Send WebSocket notification to enrolled students
+    try:
+        enrolled_students = session.course.enrollments.filter(is_active=True).values_list('student_id', flat=True)
+        websocket_service.send_session_ended_notification(session, list(enrolled_students))
+        logger.info(f"WebSocket session ended notification sent for session {session.id} to {len(enrolled_students)} students")
+    except Exception as e:
+        logger.error(f"Failed to send WebSocket session ended notification: {e}")
     
     return Response({
         'message': 'Attendance session ended successfully',
@@ -342,6 +359,22 @@ def mark_attendance(request):
     attendance.save()
     
     logger.info(f"Attendance marked by {request.user.email} for session {session.title}")
+    
+    # Send WebSocket notification to the student
+    try:
+        attendance_data = {
+            'session_id': session.id,
+            'session_title': session.title,
+            'course_code': session.course.code,
+            'is_present': attendance.is_present,
+            'status': attendance.status,
+            'location_verified': location_verified,
+            'distance': distance if distance != float('inf') else -1
+        }
+        websocket_service.send_attendance_marked_notification(request.user.id, attendance_data)
+        logger.info(f"WebSocket attendance marked notification sent to student {request.user.id}")
+    except Exception as e:
+        logger.error(f"Failed to send WebSocket attendance marked notification: {e}")
     
     # Handle infinity distance in response
     response_distance = distance if distance != float('inf') else -1

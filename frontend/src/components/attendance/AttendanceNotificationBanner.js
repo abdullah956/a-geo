@@ -17,7 +17,7 @@ const AttendanceNotificationBanner = () => {
       checkActiveSessions();
       checkLocationPermission();
       
-      // Check for active sessions every 30 seconds
+      // Check for active sessions every 30 seconds (fallback)
       const interval = setInterval(checkActiveSessions, 30000);
       
       // Listen for attendance marked events
@@ -25,11 +25,34 @@ const AttendanceNotificationBanner = () => {
         checkActiveSessions();
       };
       
+      // Listen for refresh banner events (from WebSocket)
+      const handleRefreshBanner = () => {
+        checkActiveSessions();
+      };
+      
+      // Listen for session started events (from WebSocket)
+      const handleSessionStarted = (event) => {
+        console.log('Banner received session started event:', event.detail);
+        checkActiveSessions();
+      };
+      
+      // Listen for session ended events (from WebSocket)
+      const handleSessionEnded = (event) => {
+        console.log('Banner received session ended event:', event.detail);
+        checkActiveSessions();
+      };
+      
       window.addEventListener('attendance-marked', handleAttendanceMarked);
+      window.addEventListener('refresh-attendance-banner', handleRefreshBanner);
+      window.addEventListener('attendance-session-started', handleSessionStarted);
+      window.addEventListener('attendance-session-ended', handleSessionEnded);
       
       return () => {
         clearInterval(interval);
         window.removeEventListener('attendance-marked', handleAttendanceMarked);
+        window.removeEventListener('refresh-attendance-banner', handleRefreshBanner);
+        window.removeEventListener('attendance-session-started', handleSessionStarted);
+        window.removeEventListener('attendance-session-ended', handleSessionEnded);
       };
     }
   }, []);

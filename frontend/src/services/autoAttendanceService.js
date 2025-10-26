@@ -2,6 +2,7 @@ import { attendanceService } from './attendanceService';
 import { locationService } from './locationService';
 import { notificationService } from './notificationService';
 import { sessionMonitorService } from './sessionMonitorService';
+import { websocketService } from './websocketService';
 
 /**
  * Automatic attendance service that handles the complete flow
@@ -22,7 +23,10 @@ export const autoAttendanceService = {
     // Set up event listeners
     this.setupEventListeners();
     
-    // Start session monitoring
+    // Start WebSocket connection
+    this.initializeWebSocket();
+    
+    // Start session monitoring (as fallback)
     sessionMonitorService.startMonitoring();
     
     // Check for active sessions on page load
@@ -30,12 +34,53 @@ export const autoAttendanceService = {
   },
 
   /**
+   * Initialize WebSocket connection
+   */
+  initializeWebSocket() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.id) {
+        websocketService.connect(user.id);
+        
+        // Listen for WebSocket events
+        websocketService.addEventListener('attendance_session_started', (data) => {
+          this.handleWebSocketSessionStarted(data);
+        });
+        
+        websocketService.addEventListener('attendance_session_ended', (data) => {
+          this.handleWebSocketSessionEnded(data);
+        });
+        
+        websocketService.addEventListener('attendance_marked', (data) => {
+          this.handleWebSocketAttendanceMarked(data);
+        });
+        
+        console.log('WebSocket initialized for user:', user.id);
+      } else {
+        console.warn('No user data available for WebSocket connection');
+      }
+    } catch (error) {
+      console.error('Error initializing WebSocket:', error);
+    }
+  },
+
+  /**
    * Set up event listeners for notifications and session updates
    */
   setupEventListeners() {
-    // Listen for attendance session started events
+    // Listen for attendance session started events (from WebSocket)
     window.addEventListener('attendance-session-started', (event) => {
       this.handleSessionStarted(event.detail);
+    });
+
+    // Listen for attendance session ended events (from WebSocket)
+    window.addEventListener('attendance-session-ended', (event) => {
+      this.handleSessionEnded(event.detail);
+    });
+
+    // Listen for refresh attendance banner events
+    window.addEventListener('refresh-attendance-banner', () => {
+      this.checkActiveSessions();
     });
 
     // Listen for visibility changes to check for new sessions
@@ -84,7 +129,88 @@ export const autoAttendanceService = {
   },
 
   /**
-   * Handle a new attendance session
+   * Handle WebSocket session started event
+   * @param {Object} data - WebSocket data
+   */
+  handleWebSocketSessionStarted(data) {
+    console.log('WebSocket session started:', data);
+    if (data.session) {
+      this.handleSessionStarted(data.session);
+    }
+  },
+
+  /**
+   * Handle WebSocket session ended event
+   * @param {Object} data - WebSocket data
+   */
+  handleWebSocketSessionEnded(data) {
+    console.log('WebSocket session ended:', data);
+    if (data.session) {
+      this.handleSessionEnded(data.session);
+    }
+  },
+
+  /**
+   * Handle WebSocket attendance marked event
+   * @param {Object} data - WebSocket data
+   */
+  handleWebSocketAttendanceMarked(data) {
+    console.log('WebSocket attendance marked:', data);
+    if (data.attendance) {
+      this.handleAttendanceMarked(data.attendance);
+    }
+  },
+
+  /**
+   * Handle session started event
+   * @param {Object} session - Session data
+   */
+  handleSessionStarted(session) {
+    console.log('=== SESSION STARTED EVENT ===');
+    console.log('Session started:', session);
+    
+    // Check if session has already been processed
+    if (this.hasProcessedSession(session.id)) {
+      console.log('Session already processed, skipping:', session.id);
+      return;
+    }
+    
+    // Mark session as processed (to avoid duplicate notifications)
+    this.markSessionAsProcessed(session.id);
+    
+    // Show notification to user - DON'T automatically mark attendance
+    console.log('Showing notification for new session:', session.id);
+    
+    // Dispatch event to refresh banner (this will show the notification banner)
+    window.dispatchEvent(new CustomEvent('refresh-attendance-banner'));
+  },
+
+  /**
+   * Handle session ended event
+   * @param {Object} session - Session data
+   */
+  handleSessionEnded(session) {
+    console.log('=== SESSION ENDED EVENT ===');
+    console.log('Session ended:', session);
+    
+    // Dispatch event to refresh banner
+    window.dispatchEvent(new CustomEvent('refresh-attendance-banner'));
+  },
+
+  /**
+   * Handle attendance marked event
+   * @param {Object} attendance - Attendance data
+   */
+  handleAttendanceMarked(attendance) {
+    console.log('=== ATTENDANCE MARKED EVENT ===');
+    console.log('Attendance marked:', attendance);
+    
+    // Dispatch event to refresh banner
+    window.dispatchEvent(new CustomEvent('refresh-attendance-banner'));
+  },
+
+  /**
+   * Handle a new attendance session (legacy method for polling)
    * @param {Object} session - Session data
    */
   async handleNewSession(session) {
@@ -100,12 +226,14 @@ export const autoAttendanceService = {
     // Show notification to student
     notificationService.showAttendanceNotification(session);
     
-    // Mark session as processed
+    // Mark session as processed (to avoid duplicate notifications)
     this.markSessionAsProcessed(session.id);
     
-    // Start automatic attendance process
-    console.log('Starting automatic attendance for session:', session.id);
-    await this.startAutomaticAttendance(session);
+    // DON'T automatically mark attendance - let user decide
+    console.log('Session notification shown, waiting for user action:', session.id);
+    
+    // Dispatch event to refresh banner
+    window.dispatchEvent(new CustomEvent('refresh-attendance-banner'));
   },
 
   /**

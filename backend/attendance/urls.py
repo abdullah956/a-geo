@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import webhook_views
 
 app_name = 'attendance'
 
@@ -26,4 +27,10 @@ urlpatterns = [
     path('sessions/<int:session_id>/generate-token/', views.generate_qr_token_view, name='generate-qr-token'),
     path('sessions/<int:session_id>/refresh-token/', views.refresh_qr_token_view, name='refresh-qr-token'),
     path('verify-token/', views.verify_qr_token_view, name='verify-qr-token'),
+    
+    # Webhook endpoints for external triggers
+    path('webhook/session-started/', webhook_views.webhook_session_started, name='webhook-session-started'),
+    path('webhook/session-ended/', webhook_views.webhook_session_ended, name='webhook-session-ended'),
+    path('webhook/attendance-marked/', webhook_views.webhook_attendance_marked, name='webhook-attendance-marked'),
+    path('webhook/broadcast/', webhook_views.webhook_broadcast_update, name='webhook-broadcast'),
 ]
