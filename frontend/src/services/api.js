@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-// Use your laptop's local IP address instead of localhost for mobile testing
-// Find your IP with: ifconfig | grep "inet " | grep -v 127.0.0.1
-// Replace 192.168.100.8 with your actual IP address
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.100.8:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // Create axios instance
 const api = axios.create({
