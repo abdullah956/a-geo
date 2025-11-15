@@ -14,3 +14,6 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
+
+# Note: The auto-end scheduler is automatically started via AttendanceConfig.ready()
+# in attendance/apps.py when Django loads the app, so it works with both ASGI and WSGI.

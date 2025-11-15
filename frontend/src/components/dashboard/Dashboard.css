@@ -3,34 +3,34 @@
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
 }
 
-/* Teacher Dashboard Theme */
+/* Teacher Dashboard Theme - Light Red */
 .dashboard.teacher-theme {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
 }
 
 .dashboard.teacher-theme .card-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
 }
 
 .dashboard.teacher-theme .card-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 /* Teacher theme for other elements */
 .dashboard.teacher-theme .logout-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
 }
 
 .dashboard.teacher-theme .logout-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 .dashboard.teacher-theme .back-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
 }
 
 .dashboard.teacher-theme .back-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 .dashboard-loading {
@@ -1123,6 +1123,19 @@
   color: #991b1b;
 }
 
+.attendance-rate {
+  text-align: center;
+}
+
+.attendance-rate-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .no-students-message {
   text-align: center;
   padding: 3rem;
@@ -1249,15 +1262,17 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: white;
 }
 
 .overview-stat .stat-number.missed {
-  color: #fca5a5;
+  color: #fee2e2;
 }
 
 .overview-stat .stat-label {
   font-size: 0.875rem;
-  opacity: 0.9;
+  color: white;
+  opacity: 1;
   font-weight: 500;
 }
 
@@ -1294,7 +1309,7 @@
 .course-attendance-card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1309,18 +1324,20 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin-bottom: 0;
 }
 
 .course-title h4 {
-  color: #1f2937;
+  color: white;
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   font-weight: 600;
 }
 
 .course-title p {
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
   font-size: 0.875rem;
 }
@@ -1337,6 +1354,7 @@
 
 .course-progress {
   margin-bottom: 1.5rem;
+  padding: 0 1.5rem;
 }
 
 .progress-bar {
@@ -1356,6 +1374,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
 }
 
 .course-stat {
@@ -1379,8 +1398,8 @@
 
 .course-stat .stat-label {
   font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
+  color: #374151;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

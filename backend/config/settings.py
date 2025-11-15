@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-t%dzi8wuj!-g@aj3w(q^4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'courses',
-    'attendance',
+    'attendance.apps.AttendanceConfig',  # Use explicit AppConfig to ensure scheduler starts
 ]
 
 MIDDLEWARE = [
@@ -287,6 +287,11 @@ LOGGING = {
             'propagate': False,
         },
         'lms': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'courses': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,

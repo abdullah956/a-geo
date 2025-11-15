@@ -50,12 +50,13 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     course_code = serializers.CharField(source='course.code', read_only=True)
     grade_display = serializers.SerializerMethodField()
+    attendance_rate = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
         fields = [
             'id', 'student', 'student_name', 'student_email', 'course', 'course_title', 'course_code',
-            'enrolled_at', 'is_active', 'grade', 'grade_display'
+            'enrolled_at', 'is_active', 'grade', 'grade_display', 'attendance_rate'
         ]
         read_only_fields = ('id', 'enrolled_at')
 
@@ -63,6 +64,60 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         """Format grade as percentage (e.g., 80/100%)"""
         if obj.grade is not None:
             return f"{obj.grade}/100%"
+        return None
+    
+    def get_attendance_rate(self, obj):
+        """Calculate attendance rate for this student in this course"""
+        from attendance.models import AttendanceSession, Attendance
+        from django.db.models import Count, Q
+        import logging
+        
+        try:
+            # Get all attendance sessions for this course (ended sessions only)
+            # Use case-insensitive filter to be safe
+            sessions = AttendanceSession.objects.filter(
+                course=obj.course
+            ).filter(
+                status__iexact='ended'
+            )
+            
+            total_sessions = sessions.count()
+            
+            # Debug logging
+            logger = logging.getLogger('courses')
+            logger.debug(f"Course {obj.course.code}: Found {total_sessions} ended sessions")
+            
+            if total_sessions == 0:
+                # Check if there are any sessions at all
+                all_sessions = AttendanceSession.objects.filter(course=obj.course).count()
+                logger.debug(f"Course {obj.course.code}: Total sessions (all statuses): {all_sessions}")
+                return None  # No ended sessions yet
+            
+            # Get all attendance records for this student in these sessions
+            # When a session ends, all students should have attendance records (present or absent)
+            all_attendances = Attendance.objects.filter(
+                session__in=sessions,
+                student=obj.student
+            )
+            
+            total_records = all_attendances.count()
+            logger.debug(f"Student {obj.student.email} in {obj.course.code}: {total_records} attendance records for {total_sessions} sessions")
+            
+            # Count how many sessions the student actually attended (is_present=True)
+            attended_count = all_attendances.filter(is_present=True).count()
+            logger.debug(f"Student {obj.student.email} in {obj.course.code}: Attended {attended_count} out of {total_sessions}")
+            
+            # Calculate rate: attended / total ended sessions
+            attendance_rate = (attended_count / total_sessions * 100) if total_sessions > 0 else 0.0
+            
+            result = round(attendance_rate, 2)
+            logger.debug(f"Student {obj.student.email} in {obj.course.code}: Attendance rate = {result}%")
+            
+            return result
+        except Exception as e:
+            # Log error but return None to avoid breaking the serializer
+            logger = logging.getLogger('courses')
+            logger.error(f"Error calculating attendance rate for student {obj.student.id} in course {obj.course.id}: {e}", exc_info=True)
         return None
 
     def validate(self, data):

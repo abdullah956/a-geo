@@ -131,7 +131,24 @@ const StudentAttendancePanel = ({ onBack }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      // Format with timezone to match admin panel (UTC)
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'UTC',
+        timeZoneName: 'short'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const handleQRSuccess = (result) => {

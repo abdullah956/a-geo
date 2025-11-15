@@ -193,9 +193,17 @@ def teacher_students_view(request):
     """
     Get all students enrolled in courses taught by the current teacher
     """
+    import logging
+    logger = logging.getLogger('api')
+    
     try:
+        from attendance.models import AttendanceSession, Attendance
+        
+        logger.info(f"Teacher {request.user.email} requesting students list")
+        
         # Get all courses taught by the current teacher
         teacher_courses = Course.objects.filter(teacher=request.user, is_active=True)
+        logger.info(f"Found {teacher_courses.count()} courses for teacher")
         
         # Get all enrollments for these courses
         enrollments = Enrollment.objects.filter(
@@ -203,16 +211,72 @@ def teacher_students_view(request):
             is_active=True
         ).select_related('student', 'course').order_by('course__code', 'student__last_name', 'student__first_name')
         
-        serializer = EnrollmentSerializer(enrollments, many=True)
+        logger.info(f"Found {enrollments.count()} enrollments")
+        
+        # Calculate attendance rates for each enrollment directly in the view
+        enrollment_data = []
+        for enrollment in enrollments:
+            # Get ALL ended sessions for this course (case-insensitive)
+            all_sessions = AttendanceSession.objects.filter(
+                course=enrollment.course
+            ).filter(status__iexact='ended')
+            
+            total_sessions = all_sessions.count()
+            logger.info(f"Course {enrollment.course.code} (ID: {enrollment.course.id}): {total_sessions} ended sessions")
+            
+            # Debug: Check all session statuses for this course
+            all_statuses = AttendanceSession.objects.filter(
+                course=enrollment.course
+            ).values_list('status', flat=True).distinct()
+            logger.info(f"Course {enrollment.course.code}: All session statuses found: {list(all_statuses)}")
+            
+            attendance_data = None
+            if total_sessions > 0:
+                # Count ALL times student marked present in this course
+                total_presents = Attendance.objects.filter(
+                    session__course=enrollment.course,
+                    student=enrollment.student,
+                    is_present=True
+                ).count()
+                
+                logger.info(f"Student {enrollment.student.email} in {enrollment.course.code}: {total_presents} presents out of {total_sessions} sessions")
+                
+                # Calculate percentage as whole number
+                attendance_percentage = int(round((total_presents / total_sessions * 100), 0))
+                
+                # Return as dict with fraction and percentage
+                attendance_data = {
+                    'attended': total_presents,
+                    'total': total_sessions,
+                    'percentage': attendance_percentage,
+                    'display': f"{total_presents}/{total_sessions} ({attendance_percentage}%)"
+                }
+                logger.info(f"Calculated attendance: {attendance_data['display']}")
+            else:
+                logger.info(f"Course {enrollment.course.code}: No ended sessions, attendance_rate will be None")
+            
+            # Serialize enrollment (but override attendance_rate from view calculation)
+            serializer = EnrollmentSerializer(enrollment)
+            enrollment_dict = serializer.data
+            # Override with our calculated value
+            enrollment_dict['attendance_rate'] = attendance_data
+            enrollment_data.append(enrollment_dict)
+        
+        logger.info(f"Returning {len(enrollment_data)} students with attendance data")
         
         return Response({
-            'students': serializer.data,
+            'students': enrollment_data,
             'total_students': enrollments.count(),
             'courses_count': teacher_courses.count()
         })
         
     except Exception as e:
+        import logging
+        logger = logging.getLogger('courses')
+        logger.error(f"Error in teacher_students_view: {e}", exc_info=True)
+        import traceback
+        traceback.print_exc()
         return Response(
-            {'error': 'Failed to fetch students'}, 
+            {'error': f'Failed to fetch students: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

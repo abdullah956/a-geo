@@ -26,19 +26,9 @@ import attendance.routing
 
 django_asgi_app = get_asgi_application()
 
-# Start auto-end scheduler in background thread
-def start_scheduler():
-    """Start the auto-end scheduler in a background thread"""
-    try:
-        from attendance.auto_end_scheduler import run_scheduler
-        print("Starting auto-end scheduler...")
-        run_scheduler(check_interval=60)  # Check every minute
-    except Exception as e:
-        print(f"Failed to start scheduler: {e}")
-
-# Start scheduler in daemon thread
-scheduler_thread = threading.Thread(target=start_scheduler, daemon=True)
-scheduler_thread.start()
+# Note: The auto-end scheduler is now started automatically via AttendanceConfig.ready()
+# in attendance/apps.py, so it works with both ASGI and WSGI.
+# No need to start it here to avoid duplicate scheduler threads.
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,

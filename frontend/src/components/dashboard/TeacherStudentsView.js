@@ -142,6 +142,7 @@ const TeacherStudentsView = ({ onBack }) => {
                     <th>Email</th>
                     <th>Course</th>
                     <th>Enrolled Date</th>
+                    <th>Attendance Rate</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -164,6 +165,22 @@ const TeacherStudentsView = ({ onBack }) => {
                       </td>
                       <td className="enrolled-date">
                         {formatDate(enrollment.enrolled_at)}
+                      </td>
+                      <td className="attendance-rate">
+                        {enrollment.attendance_rate && enrollment.attendance_rate.display ? (
+                          <span 
+                            className="attendance-rate-badge"
+                            style={{
+                              color: enrollment.attendance_rate.percentage >= 80 ? '#10b981' : 
+                                     enrollment.attendance_rate.percentage >= 60 ? '#f59e0b' : '#ef4444',
+                              fontWeight: '600'
+                            }}
+                          >
+                            {enrollment.attendance_rate.display}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#6b7280' }}>N/A</span>
+                        )}
                       </td>
                       <td className="status">
                         <span className={`status-badge ${enrollment.is_active ? 'active' : 'inactive'}`}>
