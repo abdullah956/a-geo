@@ -134,7 +134,7 @@ const StudentAttendancePanel = ({ onBack }) => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      // Format with timezone to match admin panel (UTC)
+      // Format with user's local timezone (browser timezone)
       return date.toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
@@ -143,7 +143,6 @@ const StudentAttendancePanel = ({ onBack }) => {
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: 'UTC',
         timeZoneName: 'short'
       });
     } catch (error) {

@@ -328,3 +328,8 @@ CHANNEL_LAYERS = {
 #         'BACKEND': 'channels.layers.InMemoryChannelLayer'
 #     }
 # }
+
+# Display timezone for Excel exports
+# Leave empty to use server's local timezone
+# Common timezones: 'Asia/Karachi', 'Asia/Kuala_Lumpur', 'UTC', etc.
+DISPLAY_TIMEZONE = config('DISPLAY_TIMEZONE', default='')  # Empty = use server's local timezone

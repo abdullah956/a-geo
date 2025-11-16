@@ -7,6 +7,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.conf import settings
 from django.db.models import Q, Count
 from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema, OpenApiExample
@@ -23,9 +24,67 @@ from .serializers import (
 from .websocket_service import websocket_service
 from courses.models import Course, Enrollment
 
+# Try to import timezone libraries
+try:
+    import pytz
+    HAS_PYTZ = True
+except ImportError:
+    HAS_PYTZ = False
+    try:
+        from zoneinfo import ZoneInfo
+        HAS_ZONEINFO = True
+    except ImportError:
+        HAS_ZONEINFO = False
+
 # Get logger instances
 logger = logging.getLogger('attendance')
 api_logger = logging.getLogger('api')
+
+
+def convert_to_local_time(utc_datetime):
+    """
+    Convert UTC datetime to local timezone for display
+    Uses DISPLAY_TIMEZONE setting if available, otherwise uses server's local timezone
+    """
+    if not utc_datetime:
+        return None
+    
+    # Ensure datetime is timezone-aware (UTC)
+    if timezone.is_naive(utc_datetime):
+        utc_datetime = timezone.make_aware(utc_datetime, timezone.utc)
+    
+    # Get display timezone from settings
+    display_tz = getattr(settings, 'DISPLAY_TIMEZONE', '')
+    
+    if display_tz:
+        # Use specified timezone
+        try:
+            if HAS_PYTZ:
+                tz = pytz.timezone(display_tz)
+            elif HAS_ZONEINFO:
+                tz = ZoneInfo(display_tz)
+            else:
+                # Fallback: use UTC
+                return utc_datetime.astimezone(timezone.utc)
+            
+            return utc_datetime.astimezone(tz)
+        except Exception as e:
+            logger.warning(f"Invalid timezone {display_tz}, using UTC: {e}")
+            return utc_datetime.astimezone(timezone.utc)
+    else:
+        # Use server's local timezone
+        # Django's timezone.localtime() converts to the server's local timezone
+        return timezone.localtime(utc_datetime)
+
+
+def format_datetime_local(utc_datetime, format_string='%Y-%m-%d %H:%M:%S'):
+    """
+    Format UTC datetime to local timezone string
+    """
+    local_dt = convert_to_local_time(utc_datetime)
+    if not local_dt:
+        return 'N/A'
+    return local_dt.strftime(format_string)
 
 
 class SessionPagination(PageNumberPagination):
@@ -628,17 +687,35 @@ def export_session_to_excel(request, session_id):
     ws['A1'].font = Font(size=16, bold=True)
     ws.merge_cells('A1:F1')
     
+    # Get timezone name for display
+    display_tz = getattr(settings, 'DISPLAY_TIMEZONE', '')
+    if display_tz:
+        # Get timezone abbreviation
+        try:
+            if HAS_PYTZ:
+                tz = pytz.timezone(display_tz)
+                local_dt = convert_to_local_time(timezone.now())
+                tz_name = local_dt.strftime('%Z') if local_dt else display_tz.split('/')[-1]
+            else:
+                tz_name = display_tz.split('/')[-1]
+        except:
+            tz_name = 'Local'
+    else:
+        # Use server's local timezone
+        local_dt = timezone.localtime(timezone.now())
+        tz_name = local_dt.strftime('%Z') if hasattr(local_dt, 'strftime') else 'Local'
+    
     ws['A2'] = f"Session: {session.title}"
     ws['A3'] = f"Course: {session.course.code} - {session.course.title}"
     ws['A4'] = f"Teacher: {session.teacher.get_full_name()}"
     ws['A5'] = f"Classroom: {session.classroom_name}"
-    ws['A6'] = f"Started: {session.started_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    ws['A6'] = f"Started: {format_datetime_local(session.started_at)} ({tz_name})"
     if session.ended_at:
-        ws['A7'] = f"Ended: {session.ended_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        ws['A7'] = f"Ended: {format_datetime_local(session.ended_at)} ({tz_name})"
     ws['A8'] = f"Status: {session.status.upper()}"
     
     # Add column headers for attendance data
-    headers = ['#', 'Student ID', 'Student Name', 'Email', 'Status', 'Marked At', 'Location Verified', 'Distance (m)']
+    headers = ['#', 'Student ID', 'Student Name', 'Email', 'Status', f'Marked At ({tz_name})', 'Location Verified', 'Distance (m)']
     header_row = 10
     
     for col, header in enumerate(headers, start=1):
@@ -672,7 +749,7 @@ def export_session_to_excel(request, session_id):
         if attendance and attendance.is_present:
             ws.cell(row=row_num, column=5).value = "PRESENT"
             ws.cell(row=row_num, column=5).font = Font(color="00B050", bold=True)
-            ws.cell(row=row_num, column=6).value = attendance.marked_at.strftime('%Y-%m-%d %H:%M:%S') if attendance.marked_at else 'N/A'
+            ws.cell(row=row_num, column=6).value = format_datetime_local(attendance.marked_at) if attendance.marked_at else 'N/A'
             ws.cell(row=row_num, column=7).value = "Yes" if attendance.location_verified else "No"
             ws.cell(row=row_num, column=8).value = round(attendance.distance_from_classroom, 2) if attendance.distance_from_classroom else 'N/A'
         else:
@@ -714,7 +791,7 @@ def export_session_to_excel(request, session_id):
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    filename = f"attendance_{session.course.code}_{session.title}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    filename = f"attendance_{session.course.code}_{session.title}_{format_datetime_local(timezone.now(), '%Y%m%d')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     wb.save(response)
