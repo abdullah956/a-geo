@@ -27,7 +27,30 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-t%dzi8wuj!-g@aj3w(q^4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,192.168.18.13,192.168.18.12', cast=lambda v: [s.strip() for s in v.split(',')])
+# Network IP Configuration (for mobile access)
+# These can be set via environment variables in a .env file in the backend directory
+# 
+# To set up:
+# 1. Create a .env file in the backend/ directory
+# 2. Add these lines:
+#    NETWORK_IP=192.168.18.13
+#    MOBILE_IP=192.168.18.12
+#
+# To find your network IP:
+#   Mac/Linux: run 'ifconfig' and look for your Wi-Fi adapter IP
+#   Windows: run 'ipconfig' and look for your Wi-Fi adapter IP
+#
+# NETWORK_IP: Your computer's IP address (REQUIRED for mobile access)
+# MOBILE_IP: Your mobile device's IP (OPTIONAL - only for CORS restrictions)
+# These MUST be set in .env file - no defaults provided
+NETWORK_IP = config('NETWORK_IP')
+MOBILE_IP = config('MOBILE_IP', default=None)  # Optional, can be empty
+
+# Build ALLOWED_HOSTS dynamically
+default_hosts = f'localhost,127.0.0.1,0.0.0.0,{NETWORK_IP}'
+if MOBILE_IP:
+    default_hosts += f',{MOBILE_IP}'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -174,12 +197,14 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS settings
+# Build CORS origins dynamically based on network IP
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://192.168.18.13:3000",
-    "http://192.168.18.12:3000",
+    f"http://{NETWORK_IP}:3000",
 ]
+if MOBILE_IP:
+    CORS_ALLOWED_ORIGINS.append(f"http://{MOBILE_IP}:3000")
 
 # Allow all origins in development (for mobile testing)
 # In production, use CORS_ALLOWED_ORIGINS above

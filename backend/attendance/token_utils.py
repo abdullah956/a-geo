@@ -11,6 +11,9 @@ from django.conf import settings
 from django.utils import timezone
 from .models import AttendanceToken
 
+# Get network IP from settings (for QR code URLs)
+NETWORK_IP = getattr(settings, 'NETWORK_IP', '192.168.18.13')
+
 
 # Secret key for JWT signing (use Django's SECRET_KEY)
 JWT_SECRET = settings.SECRET_KEY
@@ -73,7 +76,7 @@ def generate_token(session, duration_minutes=10, request=None):
             # If referer is localhost, replace with network IP for mobile access
             if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
                 # Use network IP instead (for mobile scanning)
-                frontend_base = 'http://192.168.18.13:3000'
+                frontend_base = f'http://{NETWORK_IP}:3000'
         else:
             # Try to get from Origin header
             origin = request.META.get('HTTP_ORIGIN', '')
@@ -81,7 +84,7 @@ def generate_token(session, duration_minutes=10, request=None):
                 frontend_base = origin
                 # If origin is localhost, replace with network IP
                 if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
-                    frontend_base = 'http://192.168.18.13:3000'
+                    frontend_base = f'http://{NETWORK_IP}:3000'
             else:
                 # Use request host to determine frontend URL
                 # Backend runs on port 8000, frontend on 3000
@@ -90,13 +93,13 @@ def generate_token(session, duration_minutes=10, request=None):
                 
                 if host_without_port in ['localhost', '127.0.0.1']:
                     # For QR codes, always use network IP (mobile devices can't access localhost)
-                    frontend_base = 'http://192.168.18.13:3000'
+                    frontend_base = f'http://{NETWORK_IP}:3000'
                 else:
                     # Use the same IP but port 3000 for frontend
                     frontend_base = f"http://{host_without_port}:3000"
     else:
         # Default to network IP for QR codes (mobile scanning)
-        frontend_base = 'http://192.168.18.13:3000'
+        frontend_base = f'http://{NETWORK_IP}:3000'
     
     # Create attendance URL with token
     attendance_url = f"{frontend_base}/attendance/qr/{token}"
