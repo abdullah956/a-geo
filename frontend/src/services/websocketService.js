@@ -2,6 +2,7 @@
  * WebSocket service for real-time attendance notifications
  */
 import { notificationService } from './notificationService';
+import { getWebSocketUrl } from '../utils/backendUrl';
 
 class WebSocketService {
   constructor() {
@@ -34,11 +35,9 @@ class WebSocketService {
     }
 
     try {
-      // Use wss:// for production, ws:// for development
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Connect to backend port (8000) for WebSocket
-      const backendHost = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
-      const wsUrl = `${protocol}//${backendHost}/ws/attendance/notifications/${userId}/`;
+      // Get WebSocket URL from utility (already includes protocol)
+      const backendBaseUrl = getWebSocketUrl();
+      const wsUrl = `${backendBaseUrl}/ws/attendance/notifications/${userId}/`;
       
       console.log('Connecting to WebSocket:', wsUrl);
       

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { profileService } from '../../services/profileService';
+import { getBackendBaseUrl } from '../../utils/backendUrl';
 import './Profile.css';
 
 const Profile = ({ onBack }) => {
@@ -37,7 +38,7 @@ const Profile = ({ onBack }) => {
         // Check if the URL already includes the domain
         const imageUrl = profileData.profile_picture.startsWith('http') 
           ? profileData.profile_picture 
-          : `http://localhost:8000${profileData.profile_picture}`;
+          : `${getBackendBaseUrl()}${profileData.profile_picture}`;
         console.log('Setting image preview:', imageUrl);
         setImagePreview(imageUrl);
       } else {

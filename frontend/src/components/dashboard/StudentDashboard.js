@@ -5,6 +5,7 @@ import StudentAttendancePanel from '../attendance/StudentAttendancePanel';
 import AttendanceNotificationBanner from '../attendance/AttendanceNotificationBanner';
 import { autoAttendanceService } from '../../services/autoAttendanceService';
 import StudentAttendanceDetails from './StudentAttendanceDetails';
+import { getBackendBaseUrl } from '../../utils/backendUrl';
 import './Dashboard.css';
 import '../../services/autoAttendanceService.css';
 
@@ -91,7 +92,7 @@ const StudentDashboard = () => {
       <header className="dashboard-header">
         <div className="user-info">
           <img
-            src={user?.profile_picture ? (user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:8000${user.profile_picture}`) : '/default-avatar.svg'}
+            src={user?.profile_picture ? (user.profile_picture.startsWith('http') ? user.profile_picture : `${getBackendBaseUrl()}${user.profile_picture}`) : '/default-avatar.svg'}
             alt="Profile"
             className="profile-avatar"
           />
