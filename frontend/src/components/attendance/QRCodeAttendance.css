@@ -1,0 +1,188 @@
+.qr-attendance-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.qr-attendance-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.qr-attendance-header {
+  margin-bottom: 30px;
+}
+
+.qr-attendance-header h2 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.qr-attendance-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.qr-attendance-loading,
+.qr-attendance-processing {
+  padding: 40px 20px;
+}
+
+.qr-attendance-loading .spinner,
+.qr-attendance-processing .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.qr-attendance-success {
+  padding: 20px;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.qr-attendance-success h2 {
+  color: #10b981;
+  margin-bottom: 15px;
+  font-size: 28px;
+}
+
+.success-message {
+  color: #059669;
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.session-info {
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.session-info p {
+  margin: 10px 0;
+  color: #333;
+}
+
+.session-info strong {
+  color: #059669;
+}
+
+.redirect-message {
+  color: #666;
+  font-size: 14px;
+  margin: 20px 0;
+}
+
+.qr-attendance-error {
+  padding: 20px;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.qr-attendance-error h2 {
+  color: #ef4444;
+  margin-bottom: 15px;
+  font-size: 28px;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 16px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.go-to-dashboard-btn,
+.retry-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.go-to-dashboard-btn {
+  background: #667eea;
+  color: white;
+}
+
+.go-to-dashboard-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.retry-btn {
+  background: #f59e0b;
+  color: white;
+}
+
+.retry-btn:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.qr-attendance-login {
+  margin-top: 20px;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .qr-attendance-card {
+    padding: 30px 20px;
+  }
+
+  .qr-attendance-header h2 {
+    font-size: 24px;
+  }
+
+  .error-actions {
+    flex-direction: column;
+  }
+
+  .go-to-dashboard-btn,
+  .retry-btn {
+    width: 100%;
+  }
+}
+

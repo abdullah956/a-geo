@@ -17,13 +17,14 @@ JWT_SECRET = settings.SECRET_KEY
 JWT_ALGORITHM = 'HS256'
 
 
-def generate_token(session, duration_minutes=10):
+def generate_token(session, duration_minutes=10, request=None):
     """
     Generate a JWT token for an attendance session
     
     Args:
         session: AttendanceSession instance
         duration_minutes: Token validity duration in minutes
+        request: Django request object (optional, for getting frontend URL)
     
     Returns:
         dict: Token data including token string and QR code
@@ -57,15 +58,59 @@ def generate_token(session, duration_minutes=10):
         max_uses=0  # Unlimited uses
     )
     
-    # Generate QR code
-    qr_code_data = generate_qr_code(token)
+    # Generate URL for QR code (instead of just token)
+    # QR codes are meant to be scanned by mobile devices, so always use network IP
+    # Try to get frontend URL from request, but prefer network IP over localhost
+    if request:
+        # Get the frontend URL from request referer (most reliable)
+        referer = request.META.get('HTTP_REFERER', '')
+        if referer:
+            # Extract base URL from referer
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            frontend_base = f"{parsed.scheme}://{parsed.netloc}"
+            
+            # If referer is localhost, replace with network IP for mobile access
+            if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
+                # Use network IP instead (for mobile scanning)
+                frontend_base = 'http://192.168.18.13:3000'
+        else:
+            # Try to get from Origin header
+            origin = request.META.get('HTTP_ORIGIN', '')
+            if origin:
+                frontend_base = origin
+                # If origin is localhost, replace with network IP
+                if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
+                    frontend_base = 'http://192.168.18.13:3000'
+            else:
+                # Use request host to determine frontend URL
+                # Backend runs on port 8000, frontend on 3000
+                host = request.get_host()
+                host_without_port = host.split(':')[0] if ':' in host else host
+                
+                if host_without_port in ['localhost', '127.0.0.1']:
+                    # For QR codes, always use network IP (mobile devices can't access localhost)
+                    frontend_base = 'http://192.168.18.13:3000'
+                else:
+                    # Use the same IP but port 3000 for frontend
+                    frontend_base = f"http://{host_without_port}:3000"
+    else:
+        # Default to network IP for QR codes (mobile scanning)
+        frontend_base = 'http://192.168.18.13:3000'
+    
+    # Create attendance URL with token
+    attendance_url = f"{frontend_base}/attendance/qr/{token}"
+    
+    # Generate QR code with URL
+    qr_code_data = generate_qr_code(attendance_url)
     
     return {
         'token': token,
         'token_hash': token_hash,
         'expires_at': expires_at.isoformat(),
         'qr_code': qr_code_data,
-        'token_id': attendance_token.id
+        'token_id': attendance_token.id,
+        'attendance_url': attendance_url  # Also return URL for reference
     }
 
 
@@ -155,13 +200,14 @@ def deactivate_session_tokens(session):
         token.deactivate()
 
 
-def refresh_token(session, old_token_string=None):
+def refresh_token(session, old_token_string=None, request=None):
     """
     Refresh/regenerate token for a session
     
     Args:
         session: AttendanceSession instance
         old_token_string: Optional old token to deactivate
+        request: Django request object (optional, for getting frontend URL)
     
     Returns:
         dict: New token data
@@ -175,6 +221,6 @@ def refresh_token(session, old_token_string=None):
         except AttendanceToken.DoesNotExist:
             pass
     
-    # Generate new token
-    return generate_token(session)
+    # Generate new token (pass request to get frontend URL)
+    return generate_token(session, request=request)
 

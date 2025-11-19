@@ -833,8 +833,8 @@ def generate_qr_token_view(request, session_id):
     # Get duration from request (default 10 minutes)
     duration_minutes = request.data.get('duration_minutes', 10)
     
-    # Generate token
-    token_data = generate_token(session, duration_minutes=duration_minutes)
+    # Generate token (pass request to get frontend URL)
+    token_data = generate_token(session, duration_minutes=duration_minutes, request=request)
     
     logger.info(f"QR token generated for session {session.id} by {request.user.email}")
     
@@ -862,8 +862,8 @@ def refresh_qr_token_view(request, session_id):
     # Get old token from request (optional)
     old_token = request.data.get('old_token', None)
     
-    # Refresh token
-    token_data = refresh_token(session, old_token)
+    # Refresh token (pass request to get frontend URL)
+    token_data = refresh_token(session, old_token, request=request)
     
     logger.info(f"QR token refreshed for session {session.id} by {request.user.email}")
     

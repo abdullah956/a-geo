@@ -125,10 +125,11 @@ const QRCodeDisplay = ({ session, onClose }) => {
               <div className="qr-code-instructions">
                 <h4>Instructions for Students:</h4>
                 <ol>
-                  <li>Open the attendance page on your device</li>
-                  <li>Click "Scan QR Code" or enter the code manually</li>
-                  <li>Scan this QR code or enter the token</li>
-                  <li>Your attendance will be marked automatically</li>
+                  <li>Open your mobile camera or QR code scanner</li>
+                  <li>Scan this QR code</li>
+                  <li>You will be taken to the LMS login page</li>
+                  <li>Login with your credentials</li>
+                  <li>Your attendance will be marked automatically!</li>
                 </ol>
               </div>
 

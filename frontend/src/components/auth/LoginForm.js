@@ -3,7 +3,7 @@ import { authService } from '../../services/authService';
 import ForgotPassword from './ForgotPassword';
 import './AuthForm.css';
 
-const LoginForm = ({ onSwitchToRegister }) => {
+const LoginForm = ({ onSwitchToRegister, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -26,8 +26,13 @@ const LoginForm = ({ onSwitchToRegister }) => {
 
     try {
       await authService.login(formData);
-      // Force page reload to update authentication state
-      window.location.href = '/dashboard';
+      // If onLoginSuccess callback is provided, call it instead of redirecting
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        // Force page reload to update authentication state
+        window.location.href = '/dashboard';
+      }
     } catch (err) {
       setError(err.detail || err.message || 'Login failed');
     } finally {

@@ -6,6 +6,7 @@ import RegisterForm from './components/auth/RegisterForm';
 import StudentDashboard from './components/dashboard/StudentDashboard';
 import TeacherDashboard from './components/dashboard/TeacherDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
+import QRCodeAttendance from './components/attendance/QRCodeAttendance';
 import './App.css';
 
 function App() {
@@ -105,6 +106,10 @@ function App() {
                 <Navigate to="/login" />
               )
             } 
+          />
+          <Route 
+            path="/attendance/qr/:token" 
+            element={<QRCodeAttendance />} 
           />
           <Route 
             path="/" 
