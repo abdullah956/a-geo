@@ -30,8 +30,8 @@ const LoginForm = ({ onSwitchToRegister, onLoginSuccess }) => {
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
-        // Force page reload to update authentication state
-        window.location.href = '/dashboard';
+      // Force page reload to update authentication state
+      window.location.href = '/dashboard';
       }
     } catch (err) {
       setError(err.detail || err.message || 'Login failed');

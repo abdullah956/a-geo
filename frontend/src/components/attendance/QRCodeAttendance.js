@@ -16,6 +16,7 @@ const QRCodeAttendance = () => {
 
   const markAttendanceWithToken = useCallback(async () => {
     try {
+      setLoading(true);
       setMessage('Getting your location...');
       
       // Get user's location
@@ -37,6 +38,7 @@ const QRCodeAttendance = () => {
       const result = await qrCodeService.verifyToken(token, latitude, longitude);
       
       if (result.attendance) {
+        setLoading(false);
         setStatus('success');
         setMessage('✅ Your attendance has been marked successfully!');
         setSessionInfo({
@@ -45,16 +47,18 @@ const QRCodeAttendance = () => {
           status: result.attendance.status
         });
 
-        // Redirect to dashboard after 3 seconds
+        // Redirect to dashboard after 5 seconds (increased for better visibility)
         setTimeout(() => {
           navigate('/dashboard');
-        }, 3000);
+        }, 5000);
       } else {
+        setLoading(false);
         setStatus('error');
         setMessage('Failed to mark attendance. Please try again.');
       }
     } catch (error) {
       console.error('Error marking attendance:', error);
+      setLoading(false);
       setStatus('error');
       setMessage(error.response?.data?.error || error.message || 'Failed to mark attendance');
     }
@@ -94,9 +98,22 @@ const QRCodeAttendance = () => {
 
   const handleLoginSuccess = useCallback(async () => {
     // After successful login, update auth state and mark attendance
+    // Change status to show loading state
+    setStatus('processing');
+    setLoading(true);
+    setMessage('Login successful! Marking your attendance...');
+    
     // Force a small delay to ensure auth state is updated
     setTimeout(async () => {
-      await markAttendanceWithToken();
+      try {
+        await markAttendanceWithToken();
+      } catch (error) {
+        console.error('Error after login:', error);
+        setStatus('error');
+        setMessage(error.response?.data?.error || error.message || 'Failed to mark attendance');
+      } finally {
+        setLoading(false);
+      }
     }, 500);
   }, [markAttendanceWithToken]);
 
