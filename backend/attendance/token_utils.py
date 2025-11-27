@@ -12,7 +12,8 @@ from django.utils import timezone
 from .models import AttendanceToken
 
 # Get network IP from settings (for QR code URLs)
-NETWORK_IP = getattr(settings, 'NETWORK_IP', '192.168.18.13')
+# NETWORK_IP must be set in .env file - no hardcoded default
+NETWORK_IP = getattr(settings, 'NETWORK_IP', None)
 
 
 # Secret key for JWT signing (use Django's SECRET_KEY)
@@ -62,8 +63,10 @@ def generate_token(session, duration_minutes=10, request=None):
     )
     
     # Generate URL for QR code (instead of just token)
-    # QR codes are meant to be scanned by mobile devices, so always use network IP
-    # Try to get frontend URL from request, but prefer network IP over localhost
+    # QR codes are meant to be scanned by mobile devices, so prefer network IP over localhost
+    # Try to get frontend URL from request
+    frontend_base = None
+    
     if request:
         # Get the frontend URL from request referer (most reliable)
         referer = request.META.get('HTTP_REFERER', '')
@@ -72,34 +75,31 @@ def generate_token(session, duration_minutes=10, request=None):
             from urllib.parse import urlparse
             parsed = urlparse(referer)
             frontend_base = f"{parsed.scheme}://{parsed.netloc}"
-            
-            # If referer is localhost, replace with network IP for mobile access
-            if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
-                # Use network IP instead (for mobile scanning)
-                frontend_base = f'http://{NETWORK_IP}:3000'
         else:
             # Try to get from Origin header
             origin = request.META.get('HTTP_ORIGIN', '')
             if origin:
                 frontend_base = origin
-                # If origin is localhost, replace with network IP
-                if 'localhost' in frontend_base or '127.0.0.1' in frontend_base:
-                    frontend_base = f'http://{NETWORK_IP}:3000'
             else:
                 # Use request host to determine frontend URL
                 # Backend runs on port 8000, frontend on 3000
                 host = request.get_host()
                 host_without_port = host.split(':')[0] if ':' in host else host
-                
-                if host_without_port in ['localhost', '127.0.0.1']:
-                    # For QR codes, always use network IP (mobile devices can't access localhost)
-                    frontend_base = f'http://{NETWORK_IP}:3000'
-                else:
-                    # Use the same IP but port 3000 for frontend
-                    frontend_base = f"http://{host_without_port}:3000"
-    else:
-        # Default to network IP for QR codes (mobile scanning)
-        frontend_base = f'http://{NETWORK_IP}:3000'
+                frontend_base = f"http://{host_without_port}:3000"
+        
+        # If frontend_base is localhost and NETWORK_IP is configured, use network IP
+        # This ensures QR codes work on mobile devices
+        if frontend_base and ('localhost' in frontend_base or '127.0.0.1' in frontend_base):
+            if NETWORK_IP:
+                frontend_base = f'http://{NETWORK_IP}:3000'
+            # If NETWORK_IP not set, keep localhost (QR won't work on mobile but will work locally)
+    
+    # Fallback if no frontend_base determined
+    if not frontend_base:
+        if NETWORK_IP:
+            frontend_base = f'http://{NETWORK_IP}:3000'
+        else:
+            frontend_base = 'http://localhost:3000'
     
     # Create attendance URL with token
     attendance_url = f"{frontend_base}/attendance/qr/{token}"

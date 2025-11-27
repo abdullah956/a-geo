@@ -15,11 +15,9 @@ export const locationService = {
         return;
       }
 
-      // Check if we're on HTTPS or localhost
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        reject(new Error('Geolocation requires HTTPS or localhost'));
-        return;
-      }
+      // Note: Some browsers require HTTPS for geolocation
+      // We let the browser handle this - it will show permission prompt or error
+      // On some mobile browsers, HTTP on local network might still work
 
       const defaultOptions = {
         enableHighAccuracy: true,
