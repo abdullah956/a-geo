@@ -77,9 +77,10 @@ def convert_to_local_time(utc_datetime):
         return timezone.localtime(utc_datetime)
 
 
-def format_datetime_local(utc_datetime, format_string='%Y-%m-%d %H:%M:%S'):
+def format_datetime_local(utc_datetime, format_string='%m/%d/%Y, %H:%M:%S'):
     """
     Format UTC datetime to local timezone string
+    Format: MM/DD/YYYY, HH:MM:SS (matches frontend toLocaleString 'en-US' format)
     """
     local_dt = convert_to_local_time(utc_datetime)
     if not local_dt:
