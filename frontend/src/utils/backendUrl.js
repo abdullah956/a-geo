@@ -1,15 +1,23 @@
 /**
  * Utility to get the backend base URL
- * Automatically detects if running on network or localhost
- * Uses the same hostname as the frontend (dynamic - no hardcoded IPs needed)
+ * Automatically detects if running on network, localhost, or ngrok
  */
+
+// Network IP for backend when using ngrok (ngrok only tunnels frontend)
+// Update this to your current network IP
+const NETWORK_IP = '192.168.18.29';
+
 export const getBackendBaseUrl = () => {
   const hostname = window.location.hostname;
   
+  // If accessing via ngrok (HTTPS tunnel for mobile geolocation)
+  // Use the network IP for backend since ngrok only tunnels frontend
+  if (hostname.includes('ngrok')) {
+    return `http://${NETWORK_IP}:8000`;
+  }
+  
   // If accessing via network IP, use the same IP for backend
-  // This way it works with any IP address automatically
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    // Use the same hostname (network IP) for backend
     return `http://${hostname}:8000`;
   }
   
@@ -26,13 +34,17 @@ export const getApiBaseUrl = () => {
 
 /**
  * Get the WebSocket URL
- * Automatically uses the same hostname as the frontend (dynamic - no hardcoded IPs needed)
+ * Automatically uses the same hostname as the frontend
  */
 export const getWebSocketUrl = () => {
   const hostname = window.location.hostname;
   
+  // If accessing via ngrok, use network IP for WebSocket
+  if (hostname.includes('ngrok')) {
+    return `ws://${NETWORK_IP}:8000`;
+  }
+  
   // If accessing via network IP, use the same IP for WebSocket
-  // This way it works with any IP address automatically
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
     return `ws://${hostname}:8000`;
   }
@@ -40,4 +52,3 @@ export const getWebSocketUrl = () => {
   // Default to localhost for local development
   return 'ws://localhost:8000';
 };
-
