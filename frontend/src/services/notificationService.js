@@ -43,8 +43,8 @@ export const notificationService = {
     }
 
     try {
-      const permission = await Notification.requestPermission();
-      return permission === 'granted';
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
     } catch (e) {
       console.log('Notification permission request failed:', e);
       return false;
@@ -61,29 +61,29 @@ export const notificationService = {
     }
 
     try {
-      const notification = new Notification('Attendance Session Started', {
-        body: `${session.title} - ${session.course_code}\nClassroom: ${session.classroom_name}\nClick to mark your attendance`,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: `attendance-${session.id}`,
-        requireInteraction: true
-      });
+    const notification = new Notification('Attendance Session Started', {
+      body: `${session.title} - ${session.course_code}\nClassroom: ${session.classroom_name}\nClick to mark your attendance`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `attendance-${session.id}`,
+      requireInteraction: true
+    });
 
-      notification.onclick = () => {
-        window.focus();
-        // Trigger attendance marking flow
-        window.dispatchEvent(new CustomEvent('attendance-session-started', {
-          detail: session
-        }));
-        notification.close();
-      };
+    notification.onclick = () => {
+      window.focus();
+      // Trigger attendance marking flow
+      window.dispatchEvent(new CustomEvent('attendance-session-started', {
+        detail: session
+      }));
+      notification.close();
+    };
 
-      // Auto-close after 30 seconds
-      setTimeout(() => {
-        notification.close();
-      }, 30000);
+    // Auto-close after 30 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 30000);
 
-      return notification;
+    return notification;
     } catch (e) {
       // Mobile browsers don't support direct Notification constructor
       console.log('Direct notifications not supported on this device:', e.message);
@@ -103,20 +103,20 @@ export const notificationService = {
     }
 
     try {
-      const notification = new Notification(
-        success ? 'Attendance Marked Successfully' : 'Attendance Failed',
-        {
-          body: message,
-          icon: '/favicon.ico',
-          tag: 'attendance-result'
-        }
-      );
+    const notification = new Notification(
+      success ? 'Attendance Marked Successfully' : 'Attendance Failed',
+      {
+        body: message,
+        icon: '/favicon.ico',
+        tag: 'attendance-result'
+      }
+    );
 
-      setTimeout(() => {
-        notification.close();
-      }, 5000);
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
 
-      return notification;
+    return notification;
     } catch (e) {
       // Mobile browsers don't support direct Notification constructor
       console.log('Direct notifications not supported on this device:', e.message);

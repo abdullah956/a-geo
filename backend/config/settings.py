@@ -47,10 +47,20 @@ NETWORK_IP = config('NETWORK_IP')
 MOBILE_IP = config('MOBILE_IP', default=None)  # Optional, can be empty
 
 # Build ALLOWED_HOSTS dynamically
+# NETWORK_IP is the primary IP for backend connections
+# But we also need to accept requests from any IP that React might detect
 default_hosts = f'localhost,127.0.0.1,0.0.0.0,{NETWORK_IP}'
 if MOBILE_IP:
     default_hosts += f',{MOBILE_IP}'
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=lambda v: [s.strip() for s in v.split(',')])
+
+# In development, accept requests from any host to handle network IP mismatches
+# React might detect a different network adapter IP than NETWORK_IP
+# This allows the backend to accept requests regardless of which IP is used
+if DEBUG:
+    # Allow all hosts in debug mode (development only)
+    # This handles cases where frontend accesses via different network IPs
+    ALLOWED_HOSTS = ['*']
 
 
 # Application definition
